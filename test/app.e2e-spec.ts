@@ -2,7 +2,27 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
+
+jest.mock('../src/auth/auth', () => ({
+  auth: {
+    handler: jest.fn(),
+    api: {},
+  },
+}));
+jest.mock('@thallesp/nestjs-better-auth', () => ({
+  AuthModule: {
+    forRoot: jest.fn(() => ({
+      module: class DummyModule {},
+      imports: [],
+      providers: [],
+      exports: [],
+    })),
+  },
+}));
+
 import { AppModule } from './../src/app.module';
+
+
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
