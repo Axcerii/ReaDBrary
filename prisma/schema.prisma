@@ -1,0 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ClubRole {
+  OWNER
+  EDITOR
+  READER
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+model User {
+  id    String  @id @default(uuid())
+  email String  @unique
+  name  String?
+  role  Role    @default(USER)
+
+  clubs ClubMember[]
+}
+
+model Club {
+  id   String @id @default(uuid())
+  name String
+  slug String @unique
+
+  members ClubMember[]
+}
+
+model ClubMember {
+  userId   String
+  clubId   String
+  role     ClubRole @default(READER)
+  joinedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  club Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
+
+  @@id([userId, clubId])
+}

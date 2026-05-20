@@ -39,3 +39,6 @@ services:
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
+
+volumes:
+  bookshelf_postgres_data:
