@@ -132,8 +132,7 @@ describe('Module Reviews (e2e)', () => {
     }
   };
 
-  const apiRequest = () =>
-    request(app.getHttpServer() as App);
+  const apiRequest = () => request(app.getHttpServer() as App);
 
   describe('POST /clubs/:clubSlug/books/:bookId/reviews', () => {
     it('devrait permettre à un membre (READER) de donner son avis', async () => {
@@ -265,7 +264,7 @@ describe('Module Reviews (e2e)', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveLength(2);
-      expect(response.body[0].rating).toBe(3); // Ordered by createdAt desc, so the editor's review is first
+      expect(response.body[0].rating).toBe(3);
       expect(response.body[0].user.name).toBe(editorUser.name);
       expect(response.body[1].rating).toBe(5);
       expect(response.body[1].user.name).toBe(ownerUser.name);

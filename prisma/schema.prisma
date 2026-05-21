@@ -39,6 +39,7 @@ model User {
   sessions      Session[]
   accounts      Account[]
   reviews       Review[]
+  progressions  Progression[]
 
   @@map("user")
 }
@@ -61,8 +62,9 @@ model Book {
   clubId    String
   club      Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  reviews   Review[]
+  updatedAt    DateTime      @updatedAt
+  reviews      Review[]
+  progressions Progression[]
 }
 
 model ClubMember {
@@ -133,6 +135,20 @@ model Review {
   bookId    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, bookId])
+}
+
+model Progression {
+  id          String   @id @default(uuid())
+  userId      String
+  bookId      String
+  currentPage Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)

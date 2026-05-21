@@ -6,6 +6,7 @@ import * as dotenv from 'dotenv';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { User, Club, Book } from '../generated/prisma/client';
+import { App } from 'supertest/types';
 
 dotenv.config();
 
@@ -121,7 +122,7 @@ describe('Module Books (e2e)', () => {
 
   // Helper to bypass ESLint any warning for supertest request app.getHttpServer()
   const apiRequest = () =>
-    request(app.getHttpServer() as string | Record<string, unknown>);
+    request(app.getHttpServer() as App);
 
   describe('POST /clubs/:clubSlug/books', () => {
     it('devrait permettre à un OWNER de créer un livre', async () => {

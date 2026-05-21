@@ -23,6 +23,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   }
 
   async cleanDatabase() {
+    await this.progression.deleteMany();
     await this.review.deleteMany();
     await this.book.deleteMany();
     await this.clubMember.deleteMany();
