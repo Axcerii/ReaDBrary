@@ -3,12 +3,12 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_PIPE } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { auth } from "./auth/auth"; // Your Better Auth instance
+import { auth } from './auth/auth'; // Your Better Auth instance
 import { AuthModule } from '@thallesp/nestjs-better-auth';
 import { ClubsModule } from './clubs/clubs.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ClubMembersModule } from './club-members/club-members.module';
-
+import { BooksModule } from './books/books.module';
 
 @Module({
   imports: [
@@ -17,6 +17,7 @@ import { ClubMembersModule } from './club-members/club-members.module';
     AuthModule.forRoot({ auth }),
     ClubsModule,
     ClubMembersModule,
+    BooksModule,
   ],
   controllers: [AppController],
   providers: [
@@ -27,4 +28,4 @@ import { ClubMembersModule } from './club-members/club-members.module';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

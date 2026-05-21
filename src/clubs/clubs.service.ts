@@ -1,11 +1,15 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateClubDto } from './dto/create-club.dto';
 import { UpdateClubDto } from './dto/update-club.dto';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class ClubsService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   private slugify(text: string): string {
     return text
@@ -30,7 +34,9 @@ export class ClubsService {
       });
     } catch (error: any) {
       if (error.code === 'P2002') {
-        throw new ConflictException(`Le slug "${slug}" est déjà utilisé par un autre club.`);
+        throw new ConflictException(
+          `Le slug "${slug}" est déjà utilisé par un autre club.`,
+        );
       }
       throw error;
     }
@@ -55,7 +61,7 @@ export class ClubsService {
     if (updateClubDto.slug) {
       updateData.slug = this.slugify(updateClubDto.slug);
     } else if (updateClubDto.name && updateClubDto.slug === undefined) {
-      // If updating name and slug is not explicitly provided, we DO NOT automatically change the slug 
+      // If updating name and slug is not explicitly provided, we DO NOT automatically change the slug
       // unless specified, but let's stick to updateData as is. Or wait, if we want to change it we can,
       // but usually slug stays the same on name update unless requested, or if they specify a new name,
       // we can optionally update slug or keep it. Let's just keep the existing behavior unless they pass slug.
@@ -71,7 +77,9 @@ export class ClubsService {
         throw new NotFoundException(`Le club avec l'ID "${id}" n'existe pas.`);
       }
       if (error.code === 'P2002') {
-        throw new ConflictException(`Le slug "${updateData.slug}" est déjà utilisé par un autre club.`);
+        throw new ConflictException(
+          `Le slug "${updateData.slug}" est déjà utilisé par un autre club.`,
+        );
       }
       throw error;
     }

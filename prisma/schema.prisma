@@ -48,6 +48,19 @@ model Club {
   slug String @unique
 
   members ClubMember[]
+  books   Book[]
+}
+
+model Book {
+  id        String   @id @default(uuid())
+  title     String
+  author    String
+  genre     String
+  pages     Int
+  clubId    String
+  club      Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model ClubMember {

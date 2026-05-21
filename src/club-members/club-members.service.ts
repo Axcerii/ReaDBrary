@@ -1,18 +1,24 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AddMemberDto } from './dto/add-member.dto';
 import { UpdateMemberRoleDto } from './dto/update-member-role.dto';
 
 @Injectable()
 export class ClubMembersService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   private async getClubIdBySlug(slug: string): Promise<string> {
     const club = await this.prisma.club.findUnique({
       where: { slug },
     });
     if (!club) {
-      throw new NotFoundException(`Le club avec le slug "${slug}" n'existe pas.`);
+      throw new NotFoundException(
+        `Le club avec le slug "${slug}" n'existe pas.`,
+      );
     }
     return club.id;
   }
@@ -26,7 +32,9 @@ export class ClubMembersService {
       where: { id: userId },
     });
     if (!user) {
-      throw new NotFoundException(`L'utilisateur avec l'ID "${userId}" n'existe pas.`);
+      throw new NotFoundException(
+        `L'utilisateur avec l'ID "${userId}" n'existe pas.`,
+      );
     }
 
     // 2. Check if already a member
@@ -58,7 +66,11 @@ export class ClubMembersService {
     });
   }
 
-  async updateMemberRole(clubSlug: string, userId: string, updateMemberRoleDto: UpdateMemberRoleDto) {
+  async updateMemberRole(
+    clubSlug: string,
+    userId: string,
+    updateMemberRoleDto: UpdateMemberRoleDto,
+  ) {
     const { role } = updateMemberRoleDto;
     const clubId = await this.getClubIdBySlug(clubSlug);
 
@@ -80,7 +92,9 @@ export class ClubMembersService {
       });
     } catch (error: any) {
       if (error.code === 'P2025') {
-        throw new NotFoundException(`La relation membre pour l'utilisateur "${userId}" dans le club "${clubSlug}" n'existe pas.`);
+        throw new NotFoundException(
+          `La relation membre pour l'utilisateur "${userId}" dans le club "${clubSlug}" n'existe pas.`,
+        );
       }
       throw error;
     }
@@ -97,7 +111,9 @@ export class ClubMembersService {
       });
     } catch (error: any) {
       if (error.code === 'P2025') {
-        throw new NotFoundException(`La relation membre pour l'utilisateur "${userId}" dans le club "${clubSlug}" n'existe pas.`);
+        throw new NotFoundException(
+          `La relation membre pour l'utilisateur "${userId}" dans le club "${clubSlug}" n'existe pas.`,
+        );
       }
       throw error;
     }
