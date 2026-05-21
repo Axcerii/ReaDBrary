@@ -1,4 +1,10 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CLUB_ROLES_KEY } from '../decorators/club-roles.decorator';
@@ -28,17 +34,17 @@ export class ClubRolesGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredRoles = this.reflector.getAllAndOverride<ClubRole[]>(CLUB_ROLES_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const requiredRoles = this.reflector.getAllAndOverride<ClubRole[]>(
+      CLUB_ROLES_KEY,
+      [context.getHandler(), context.getClass()],
+    );
 
     if (!requiredRoles || requiredRoles.length === 0) {
       return true;
     }
 
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
-    
+
     // Explicit type casting to avoid ESLint unsafe assignment warnings
     const session = (await auth.api.getSession({
       headers: request.headers as Record<string, string>,
@@ -55,14 +61,16 @@ export class ClubRolesGuard implements CanActivate {
 
     const { clubSlug, clubId } = request.params;
     if (!clubSlug && !clubId) {
-      throw new ForbiddenException('Identifiant du club manquant (clubSlug ou clubId requis)');
+      throw new ForbiddenException(
+        'Identifiant du club manquant (clubSlug ou clubId requis)',
+      );
     }
 
     const membership = await this.prisma.clubMember.findFirst({
       where: {
         userId: session.user.id,
-        club: clubSlug ? { slug: clubSlug } : undefined,
-        clubId: clubId ? clubId : undefined,
+        club: clubSlug ? { slug: clubSlug as string } : undefined,
+        clubId: clubId ? (clubId as string) : undefined,
       },
     });
 
@@ -72,7 +80,9 @@ export class ClubRolesGuard implements CanActivate {
 
     const hasRole = requiredRoles.includes(membership.role);
     if (!hasRole) {
-      throw new ForbiddenException("Vous n'avez pas les droits nécessaires pour effectuer cette action.");
+      throw new ForbiddenException(
+        "Vous n'avez pas les droits nécessaires pour effectuer cette action.",
+      );
     }
 
     request.clubMember = membership;

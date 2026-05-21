@@ -17,7 +17,7 @@ import { BookQueryDto } from './dto/book-query.dto';
 import { ClubRolesGuard } from '../auth/guards/club-roles.guard';
 import { ClubRoles } from '../auth/decorators/club-roles.decorator';
 import { ClubRole } from '../../generated/prisma/client';
-import { Response } from 'express';
+import type { Response } from 'express';
 
 @Controller('clubs/:clubSlug/books')
 @UseGuards(ClubRolesGuard)

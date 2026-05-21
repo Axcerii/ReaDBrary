@@ -9,6 +9,7 @@ import { ClubsModule } from './clubs/clubs.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ClubMembersModule } from './club-members/club-members.module';
 import { BooksModule } from './books/books.module';
+import { ReviewsModule } from './reviews/reviews.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { BooksModule } from './books/books.module';
     ClubsModule,
     ClubMembersModule,
     BooksModule,
+    ReviewsModule,
   ],
   controllers: [AppController],
   providers: [

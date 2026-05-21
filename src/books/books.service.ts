@@ -22,7 +22,7 @@ export class BooksService {
 
   async create(clubSlug: string, createBookDto: CreateBookDto) {
     const clubId = await this.getClubIdBySlug(clubSlug);
-    return this.prisma.book.create({
+    const createdBook = await this.prisma.book.create({
       data: {
         title: createBookDto.title,
         author: createBookDto.author,
@@ -31,6 +31,10 @@ export class BooksService {
         clubId,
       },
     });
+    return {
+      ...createdBook,
+      averageRating: null,
+    };
   }
 
   async findAll(clubSlug: string, query: BookQueryDto) {
@@ -39,7 +43,7 @@ export class BooksService {
     const page = Number(query.page ?? 1);
     const limit = Number(query.limit ?? 10);
 
-    return this.prisma.book.findMany({
+    const books = await this.prisma.book.findMany({
       where: {
         clubId,
         title: query.title
@@ -56,6 +60,27 @@ export class BooksService {
       take: limit,
       orderBy: { createdAt: 'desc' },
     });
+
+    const bookIds = books.map((book) => book.id);
+    const avgRatings = await this.prisma.review.groupBy({
+      by: ['bookId'],
+      where: {
+        bookId: { in: bookIds },
+      },
+      _avg: {
+        rating: true,
+      },
+    });
+
+    const ratingMap = new Map<string, number | null>();
+    for (const item of avgRatings) {
+      ratingMap.set(item.bookId, item._avg.rating);
+    }
+
+    return books.map((book) => ({
+      ...book,
+      averageRating: ratingMap.get(book.id) ?? null,
+    }));
   }
 
   async findOne(clubSlug: string, id: string) {
@@ -72,16 +97,32 @@ export class BooksService {
         `Le livre avec l'ID "${id}" n'existe pas dans ce club.`,
       );
     }
-    return book;
+
+    const reviewsAggregate = await this.prisma.review.aggregate({
+      where: { bookId: book.id },
+      _avg: {
+        rating: true,
+      },
+    });
+
+    return {
+      ...book,
+      averageRating: reviewsAggregate._avg.rating ?? null,
+    };
   }
 
   async update(clubSlug: string, id: string, updateBookDto: UpdateBookDto) {
     const book = await this.findOne(clubSlug, id);
 
-    return this.prisma.book.update({
+    const updatedBook = await this.prisma.book.update({
       where: { id: book.id },
       data: updateBookDto,
     });
+
+    return {
+      ...updatedBook,
+      averageRating: book.averageRating,
+    };
   }
 
   async remove(clubSlug: string, id: string) {
