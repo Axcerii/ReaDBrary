@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, Matches } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class CreateClubDto {
     @IsString()
@@ -7,8 +7,5 @@ export class CreateClubDto {
 
     @IsString()
     @IsOptional()
-    @Matches(/^[a-z0-9-]+$/, {
-        message: 'Le slug ne doit contenir que des lettres minuscules, des chiffres et des tirets'
-    })
     slug?: string;
 }
