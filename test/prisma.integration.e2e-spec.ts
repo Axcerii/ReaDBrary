@@ -8,7 +8,6 @@ dotenv.config();
 describe('Prisma Integration & Database Connection', () => {
     let prisma: PrismaService;
 
-    // 1. Initialisation avant tous les tests
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [
@@ -18,32 +17,30 @@ describe('Prisma Integration & Database Connection', () => {
             ],
             providers: [PrismaService],
         })
-        .overrideProvider(ConfigService)
-        .useValue({
-            get: (key: string) => {
-                if (key === 'DATABASE_URL') {
-                    const user = process.env.POSTGRES_USER || 'ReaDBrary';
-                    const pass = process.env.POSTGRES_PASSWORD || '[SerenaGaujes5312!]';
-                    const port = process.env.POSTGRES_PORT_TEST || '5433';
-                    const db = process.env.POSTGRES_DB || 'ReaDBrary';
-                    return `postgresql://${user}:${pass}@localhost:${port}/${db}-test?schema=public`;
-                }
-                return process.env[key];
-            },
-        })
-        .compile();
+            .overrideProvider(ConfigService)
+            .useValue({
+                get: (key: string) => {
+                    if (key === 'DATABASE_URL') {
+                        const user = process.env.POSTGRES_USER;
+                        const pass = process.env.POSTGRES_PASSWORD;
+                        const port = process.env.POSTGRES_PORT_TEST;
+                        const db = process.env.POSTGRES_DB;
+                        return `postgresql://${user}:${pass}@localhost:${port}/${db}-test?schema=public`;
+                    }
+                    return process.env[key];
+                },
+            })
+            .compile();
 
         prisma = moduleFixture.get<PrismaService>(PrismaService);
     });
 
-    // 2. Nettoyage AVANT chaque test (isolation parfaite)
     beforeEach(async () => {
         if (prisma) {
             await prisma.cleanDatabase();
         }
     });
 
-    // 3. Fermeture de la connexion à la fin
     afterAll(async () => {
         if (prisma) {
             await prisma.$disconnect();
