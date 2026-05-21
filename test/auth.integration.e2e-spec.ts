@@ -27,7 +27,6 @@ describe('Authentification (e2e)', () => {
                 ConfigModule.forRoot({ isGlobal: true }),
                 AppModule,
             ],
-            providers: [PrismaService],
         })
             .overrideProvider(ConfigService)
             .useValue({
@@ -45,7 +44,7 @@ describe('Authentification (e2e)', () => {
             .compile();
 
         app = moduleFixture.createNestApplication();
-        prisma = moduleFixture.get<PrismaService>(PrismaService);
+        prisma = app.get<PrismaService>(PrismaService);
         await app.init();
     });
 

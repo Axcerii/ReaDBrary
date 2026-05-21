@@ -24,6 +24,7 @@
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.1",
+    "@nestjs/mapped-types": "*",
     "@nestjs/platform-express": "^11.0.1",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
@@ -72,13 +73,16 @@
       "^.+\\.(t|j)s$": [
         "ts-jest",
         {
-          "tsconfig": "tsconfig.json"
+          "tsconfig": "tsconfig.test.json"
         }
       ]
     },
     "transformIgnorePatterns": [
       "/node_modules/"
     ],
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    },
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
   }

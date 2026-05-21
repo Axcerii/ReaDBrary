@@ -18,9 +18,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
         await this.$connect();
     }
 
-    /*async onModuleDestroy() {
+    async onModuleDestroy() {
         await this.$disconnect();
-    }*/
+    }
 
     async cleanDatabase() {
         await this.clubMember.deleteMany();
