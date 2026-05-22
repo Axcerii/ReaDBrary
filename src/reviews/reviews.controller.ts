@@ -25,6 +25,9 @@ interface BetterAuthSession {
 }
 
 interface AuthenticatedRequest extends Request {
+  clubMember?: {
+    role: 'OWNER' | 'EDITOR' | 'READER';
+  };
   userSession?: BetterAuthSession;
 }
 

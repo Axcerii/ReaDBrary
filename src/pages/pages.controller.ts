@@ -82,7 +82,7 @@ export class PagesController {
       }),
     }),
   )
-  async uploadFile(@UploadedFile() file: Express.Multer.File) {
+  async uploadFile(@UploadedFile() file: any) {
     if (!file) {
       throw new BadRequestException('Aucun fichier fourni.');
     }
@@ -96,9 +96,9 @@ export class PagesController {
   async findAll(
     @Param('clubSlug') clubSlug: string,
     @Param('bookId') bookId: string,
+    @Req() req: AuthenticatedRequest,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
-    @Req() req: AuthenticatedRequest,
   ) {
     const userStatus = this.getUserStatus(req);
     const pageNum = page ? Number(page) : undefined;
