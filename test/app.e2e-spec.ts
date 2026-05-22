@@ -20,17 +20,34 @@ jest.mock('@thallesp/nestjs-better-auth', () => ({
   },
 }));
 
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
+
 import { AppModule } from './../src/app.module';
-
-
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
+      imports: [ConfigModule.forRoot({ isGlobal: true }), AppModule],
+    })
+      .overrideProvider(ConfigService)
+      .useValue({
+        get: (key: string) => {
+          if (key === 'DATABASE_URL') {
+            const user = process.env.POSTGRES_USER;
+            const pass = process.env.POSTGRES_PASSWORD;
+            const port = process.env.POSTGRES_PORT_TEST;
+            const db = process.env.POSTGRES_DB;
+            return `postgresql://${user}:${pass}@localhost:${port}/${db}-test?schema=public`;
+          }
+          return process.env[key];
+        },
+      })
+      .compile();
 
     app = moduleFixture.createNestApplication();
     await app.init();

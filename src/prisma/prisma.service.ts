@@ -6,25 +6,28 @@ import { PrismaClient } from '../../generated/prisma/client';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
-    constructor(private configService: ConfigService) {
-        const adapter = new PrismaPg({
-            connectionString: configService.get<string>('DATABASE_URL'),
-        });
+  constructor(private configService: ConfigService) {
+    const adapter = new PrismaPg({
+      connectionString: configService.get<string>('DATABASE_URL'),
+    });
 
-        super({ adapter });
-    }
+    super({ adapter });
+  }
 
-    async onModuleInit() {
-        await this.$connect();
-    }
+  async onModuleInit() {
+    await this.$connect();
+  }
 
-    /*async onModuleDestroy() {
-        await this.$disconnect();
-    }*/
+  async onModuleDestroy() {
+    await this.$disconnect();
+  }
 
-    async cleanDatabase() {
-        await this.clubMember.deleteMany();
-        await this.user.deleteMany();
-        await this.club.deleteMany();
-    }
+  async cleanDatabase() {
+    await this.progression.deleteMany();
+    await this.review.deleteMany();
+    await this.book.deleteMany();
+    await this.clubMember.deleteMany();
+    await this.user.deleteMany();
+    await this.club.deleteMany();
+  }
 }
