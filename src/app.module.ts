@@ -1,4 +1,4 @@
-import { Module, ValidationPipe } from '@nestjs/common';
+import { Module, ValidationPipe, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_PIPE } from '@nestjs/core';
 import { AppController } from './app.controller';
@@ -11,6 +11,8 @@ import { ClubMembersModule } from './club-members/club-members.module';
 import { BooksModule } from './books/books.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { ProgressionModule } from './progression/progression.module';
+import { AdminModule } from './admin/admin.module';
+import { AuthLoggerMiddleware } from './auth/middleware/auth-logger.middleware';
 
 @Module({
   imports: [
@@ -22,6 +24,7 @@ import { ProgressionModule } from './progression/progression.module';
     BooksModule,
     ReviewsModule,
     ProgressionModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [
@@ -32,4 +35,9 @@ import { ProgressionModule } from './progression/progression.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(AuthLoggerMiddleware).forRoutes('*');
+  }
+}
+

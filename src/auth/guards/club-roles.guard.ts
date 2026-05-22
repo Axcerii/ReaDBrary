@@ -54,8 +54,23 @@ export class ClubRolesGuard implements CanActivate {
       throw new UnauthorizedException('Non authentifié');
     }
 
+    const dbUser = await this.prisma.user.findUnique({
+      where: { id: session.user.id },
+    });
+
+    if (!dbUser) {
+      throw new UnauthorizedException('Utilisateur non trouvé.');
+    }
+
+    if (!dbUser.isActive) {
+      throw new ForbiddenException(
+        'Votre compte a été désactivé par un administrateur.',
+      );
+    }
+
     // Admin has global bypass
-    if (session.user.role === 'ADMIN') {
+    if (dbUser.role === 'ADMIN') {
+      request.userSession = session;
       return true;
     }
 

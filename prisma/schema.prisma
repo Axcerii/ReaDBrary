@@ -30,6 +30,7 @@ model User {
   email String  @unique
   name  String?
   role  Role    @default(USER)
+  isActive Boolean @default(true)
 
   clubs         ClubMember[]
   emailVerified Boolean      @default(false)
