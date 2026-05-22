@@ -10,7 +10,11 @@ import { CreateReviewDto } from './dto/create-review.dto';
 export class ReviewsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async verifyBookInClub(clubSlug: string, bookId: string) {
+  private async verifyBookInClub(
+    clubSlug: string,
+    bookId: string,
+    userStatus: { isAdmin: boolean; isOwner: boolean },
+  ) {
     const book = await this.prisma.book.findFirst({
       where: {
         id: bookId,
@@ -23,6 +27,12 @@ export class ReviewsService {
         `Le livre avec l'ID "${bookId}" n'existe pas dans ce club.`,
       );
     }
+
+    if (!book.isActive && !userStatus.isAdmin && !userStatus.isOwner) {
+      throw new NotFoundException(
+        `Le livre avec l'ID "${bookId}" n'existe pas dans ce club.`,
+      );
+    }
     return book;
   }
 
@@ -31,8 +41,9 @@ export class ReviewsService {
     bookId: string,
     userId: string,
     createReviewDto: CreateReviewDto,
+    userStatus: { isAdmin: boolean; isOwner: boolean },
   ) {
-    await this.verifyBookInClub(clubSlug, bookId);
+    await this.verifyBookInClub(clubSlug, bookId, userStatus);
 
     // Uniqueness constraint: a user can only review a book once
     const existingReview = await this.prisma.review.findUnique({
@@ -69,8 +80,12 @@ export class ReviewsService {
     });
   }
 
-  async findAll(clubSlug: string, bookId: string) {
-    await this.verifyBookInClub(clubSlug, bookId);
+  async findAll(
+    clubSlug: string,
+    bookId: string,
+    userStatus: { isAdmin: boolean; isOwner: boolean },
+  ) {
+    await this.verifyBookInClub(clubSlug, bookId, userStatus);
 
     return this.prisma.review.findMany({
       where: {

@@ -23,11 +23,20 @@ export class ProgressionService {
     return club.id;
   }
 
-  private async findBookInClub(clubId: string, bookId: string) {
+  private async findBookInClub(
+    clubId: string,
+    bookId: string,
+    userStatus: { isAdmin: boolean; isOwner: boolean },
+  ) {
     const book = await this.prisma.book.findFirst({
       where: { id: bookId, clubId },
     });
     if (!book) {
+      throw new NotFoundException(
+        `Le livre avec l'ID "${bookId}" n'existe pas dans ce club.`,
+      );
+    }
+    if (!book.isActive && !userStatus.isAdmin && !userStatus.isOwner) {
       throw new NotFoundException(
         `Le livre avec l'ID "${bookId}" n'existe pas dans ce club.`,
       );
@@ -40,9 +49,10 @@ export class ProgressionService {
     bookId: string,
     userId: string,
     updateDto: UpdateProgressionDto,
+    userStatus: { isAdmin: boolean; isOwner: boolean },
   ) {
     const clubId = await this.getClubIdBySlug(clubSlug);
-    const book = await this.findBookInClub(clubId, bookId);
+    const book = await this.findBookInClub(clubId, bookId, userStatus);
 
     if (updateDto.currentPage > book.pages) {
       throw new BadRequestException(
@@ -78,9 +88,14 @@ export class ProgressionService {
     };
   }
 
-  async getProgression(clubSlug: string, bookId: string, userId: string) {
+  async getProgression(
+    clubSlug: string,
+    bookId: string,
+    userId: string,
+    userStatus: { isAdmin: boolean; isOwner: boolean },
+  ) {
     const clubId = await this.getClubIdBySlug(clubSlug);
-    const book = await this.findBookInClub(clubId, bookId);
+    const book = await this.findBookInClub(clubId, bookId, userStatus);
 
     const progression = await this.prisma.progression.findUnique({
       where: {
@@ -113,9 +128,13 @@ export class ProgressionService {
     };
   }
 
-  async getGlobalProgressions(clubSlug: string, bookId: string) {
+  async getGlobalProgressions(
+    clubSlug: string,
+    bookId: string,
+    userStatus: { isAdmin: boolean; isOwner: boolean },
+  ) {
     const clubId = await this.getClubIdBySlug(clubSlug);
-    const book = await this.findBookInClub(clubId, bookId);
+    const book = await this.findBookInClub(clubId, bookId, userStatus);
 
     const members = await this.prisma.clubMember.findMany({
       where: { clubId },

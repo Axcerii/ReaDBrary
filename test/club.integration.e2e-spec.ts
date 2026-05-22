@@ -5,15 +5,18 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as dotenv from 'dotenv';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { User } from '../generated/prisma/client';
+import { App } from 'supertest/types';
 
 dotenv.config();
+
+let mockSession: any = null;
 
 jest.mock('../src/auth/auth', () => ({
   auth: {
     handler: jest.fn().mockResolvedValue({}),
-
     api: {
-      getSession: jest.fn().mockResolvedValue(null),
+      getSession: jest.fn().mockImplementation(() => mockSession),
     },
   },
 }));
@@ -21,6 +24,22 @@ jest.mock('../src/auth/auth', () => ({
 describe('Module Clubs (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
+
+  const authenticateAs = (user: User | null) => {
+    if (!user) {
+      mockSession = null;
+    } else {
+      mockSession = {
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+        },
+      };
+    }
+  };
+
+  const apiRequest = () => request(app.getHttpServer() as App);
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -48,6 +67,7 @@ describe('Module Clubs (e2e)', () => {
 
   beforeEach(async () => {
     await prisma.cleanDatabase();
+    authenticateAs(null);
   });
 
   afterAll(async () => {
@@ -142,6 +162,67 @@ describe('Module Clubs (e2e)', () => {
       expect(response.body[0].slug).toBe('club-alpha');
       expect(response.body[1].slug).toBe('club-beta');
     });
+
+    it('devrait filtrer les clubs inactifs pour les visiteurs anonymes', async () => {
+      await prisma.club.createMany({
+        data: [
+          { name: 'Club Actif', slug: 'club-actif', isActive: true },
+          { name: 'Club Inactif', slug: 'club-inactif', isActive: false },
+        ],
+      });
+
+      const response = await apiRequest().get('/clubs');
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveLength(1);
+      expect(response.body[0].slug).toBe('club-actif');
+    });
+
+    it('devrait afficher les clubs inactifs pour les administrateurs globaux', async () => {
+      const admin = await prisma.user.create({
+        data: { email: 'admin@test.com', name: 'Admin', role: 'ADMIN' },
+      });
+      await prisma.club.createMany({
+        data: [
+          { name: 'Club Actif', slug: 'club-actif', isActive: true },
+          { name: 'Club Inactif', slug: 'club-inactif', isActive: false },
+        ],
+      });
+
+      authenticateAs(admin);
+      const response = await apiRequest().get('/clubs');
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveLength(2);
+    });
+
+    it('devrait afficher les clubs inactifs pour leur propriétaire', async () => {
+      const owner = await prisma.user.create({
+        data: { email: 'owner@test.com', name: 'Owner', role: 'USER' },
+      });
+      const otherUser = await prisma.user.create({
+        data: { email: 'other@test.com', name: 'Other', role: 'USER' },
+      });
+
+      const club = await prisma.club.create({
+        data: { name: 'Club Inactif', slug: 'club-inactif', isActive: false },
+      });
+
+      await prisma.clubMember.create({
+        data: { clubId: club.id, userId: owner.id, role: 'OWNER' },
+      });
+
+      // Pour l'owner
+      authenticateAs(owner);
+      const resOwner = await apiRequest().get('/clubs');
+      expect(resOwner.status).toBe(200);
+      expect(resOwner.body).toHaveLength(1);
+      expect(resOwner.body[0].slug).toBe('club-inactif');
+
+      // Pour un autre utilisateur
+      authenticateAs(otherUser);
+      const resOther = await apiRequest().get('/clubs');
+      expect(resOther.status).toBe(200);
+      expect(resOther.body).toHaveLength(0);
+    });
   });
 
   describe('GET /clubs/:id', () => {
@@ -165,6 +246,52 @@ describe('Module Clubs (e2e)', () => {
       );
 
       expect(response.status).toBe(404);
+    });
+
+    it('devrait retourner 404 si le club est inactif et que l’utilisateur est un visiteur ou membre non propriétaire', async () => {
+      const otherUser = await prisma.user.create({
+        data: { email: 'other@test.com', name: 'Other', role: 'USER' },
+      });
+      const club = await prisma.club.create({
+        data: { name: 'Club Inactif', slug: 'club-inactif', isActive: false },
+      });
+
+      // Visiteur anonyme
+      const resAnon = await apiRequest().get(`/clubs/${club.id}`);
+      expect(resAnon.status).toBe(404);
+
+      // Membre standard
+      await prisma.clubMember.create({
+        data: { clubId: club.id, userId: otherUser.id, role: 'READER' },
+      });
+      authenticateAs(otherUser);
+      const resMember = await apiRequest().get(`/clubs/${club.id}`);
+      expect(resMember.status).toBe(404);
+    });
+
+    it('devrait retourner le club inactif si l’utilisateur est ADMIN ou OWNER du club', async () => {
+      const admin = await prisma.user.create({
+        data: { email: 'admin@test.com', name: 'Admin', role: 'ADMIN' },
+      });
+      const owner = await prisma.user.create({
+        data: { email: 'owner@test.com', name: 'Owner', role: 'USER' },
+      });
+      const club = await prisma.club.create({
+        data: { name: 'Club Inactif', slug: 'club-inactif', isActive: false },
+      });
+      await prisma.clubMember.create({
+        data: { clubId: club.id, userId: owner.id, role: 'OWNER' },
+      });
+
+      // Admin
+      authenticateAs(admin);
+      const resAdmin = await apiRequest().get(`/clubs/${club.id}`);
+      expect(resAdmin.status).toBe(200);
+
+      // Owner
+      authenticateAs(owner);
+      const resOwner = await apiRequest().get(`/clubs/${club.id}`);
+      expect(resOwner.status).toBe(200);
     });
   });
 
@@ -215,6 +342,62 @@ describe('Module Clubs (e2e)', () => {
         .send({ slug: 'club-un' });
 
       expect(response.status).toBe(409);
+    });
+
+    it('devrait interdire de modifier isActive sans authentification ou pour un rôle non autorisé (403)', async () => {
+      const user = await prisma.user.create({
+        data: { email: 'user@test.com', name: 'User', role: 'USER' },
+      });
+      const club = await prisma.club.create({
+        data: { name: 'Club Test', slug: 'club-test' },
+      });
+      await prisma.clubMember.create({
+        data: { clubId: club.id, userId: user.id, role: 'EDITOR' },
+      });
+
+      // Sans authentification
+      const resAnon = await apiRequest()
+        .patch(`/clubs/${club.id}`)
+        .send({ isActive: false });
+      expect(resAnon.status).toBe(403);
+
+      // Membre EDITOR
+      authenticateAs(user);
+      const resEditor = await apiRequest()
+        .patch(`/clubs/${club.id}`)
+        .send({ isActive: false });
+      expect(resEditor.status).toBe(403);
+    });
+
+    it('devrait autoriser de modifier isActive pour OWNER ou ADMIN', async () => {
+      const admin = await prisma.user.create({
+        data: { email: 'admin@test.com', name: 'Admin', role: 'ADMIN' },
+      });
+      const owner = await prisma.user.create({
+        data: { email: 'owner@test.com', name: 'Owner', role: 'USER' },
+      });
+      const club = await prisma.club.create({
+        data: { name: 'Club Test', slug: 'club-test', isActive: true },
+      });
+      await prisma.clubMember.create({
+        data: { clubId: club.id, userId: owner.id, role: 'OWNER' },
+      });
+
+      // Par le propriétaire (devenir inactif)
+      authenticateAs(owner);
+      const resOwner = await apiRequest()
+        .patch(`/clubs/${club.id}`)
+        .send({ isActive: false });
+      expect(resOwner.status).toBe(200);
+      expect(resOwner.body.isActive).toBe(false);
+
+      // Par l'administrateur (devenir actif)
+      authenticateAs(admin);
+      const resAdmin = await apiRequest()
+        .patch(`/clubs/${club.id}`)
+        .send({ isActive: true });
+      expect(resAdmin.status).toBe(200);
+      expect(resAdmin.body.isActive).toBe(true);
     });
   });
 

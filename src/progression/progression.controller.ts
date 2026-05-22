@@ -25,6 +25,9 @@ interface BetterAuthSession {
 }
 
 interface AuthenticatedRequest extends Request {
+  clubMember?: {
+    role: 'OWNER' | 'EDITOR' | 'READER';
+  };
   userSession?: BetterAuthSession;
 }
 
@@ -32,6 +35,12 @@ interface AuthenticatedRequest extends Request {
 @UseGuards(ClubRolesGuard)
 export class ProgressionController {
   constructor(private readonly progressionService: ProgressionService) {}
+
+  private getUserStatus(req: AuthenticatedRequest) {
+    const isAdmin = req.userSession?.user?.role === 'ADMIN';
+    const isOwner = req.clubMember?.role === 'OWNER';
+    return { isAdmin, isOwner };
+  }
 
   @Patch('progression')
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR, ClubRole.READER)
@@ -45,11 +54,13 @@ export class ProgressionController {
     if (!userId) {
       throw new UnauthorizedException('Non authentifié');
     }
+    const userStatus = this.getUserStatus(req);
     return this.progressionService.updateProgression(
       clubSlug,
       bookId,
       userId,
       updateProgressionDto,
+      userStatus,
     );
   }
 
@@ -64,7 +75,8 @@ export class ProgressionController {
     if (!userId) {
       throw new UnauthorizedException('Non authentifié');
     }
-    return this.progressionService.getProgression(clubSlug, bookId, userId);
+    const userStatus = this.getUserStatus(req);
+    return this.progressionService.getProgression(clubSlug, bookId, userId, userStatus);
   }
 
   @Get('progressions')
@@ -72,7 +84,9 @@ export class ProgressionController {
   async getGlobal(
     @Param('clubSlug') clubSlug: string,
     @Param('bookId') bookId: string,
+    @Req() req: AuthenticatedRequest,
   ) {
-    return this.progressionService.getGlobalProgressions(clubSlug, bookId);
+    const userStatus = this.getUserStatus(req);
+    return this.progressionService.getGlobalProgressions(clubSlug, bookId, userStatus);
   }
 }

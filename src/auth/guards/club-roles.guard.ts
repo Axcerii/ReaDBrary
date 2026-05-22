@@ -4,6 +4,7 @@ import {
   ExecutionContext,
   ForbiddenException,
   UnauthorizedException,
+  NotFoundException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -81,13 +82,28 @@ export class ClubRolesGuard implements CanActivate {
       );
     }
 
+    // Load the club to check if active
+    const club = await this.prisma.club.findFirst({
+      where: clubSlug ? { slug: clubSlug as string } : { id: clubId as string },
+    });
+
+    if (!club) {
+      throw new NotFoundException("Le club n'existe pas.");
+    }
+
     const membership = await this.prisma.clubMember.findFirst({
       where: {
         userId: session.user.id,
-        club: clubSlug ? { slug: clubSlug as string } : undefined,
-        clubId: clubId ? (clubId as string) : undefined,
+        clubId: club.id,
       },
     });
+
+    if (!club.isActive) {
+      const isOwner = membership?.role === 'OWNER';
+      if (!isOwner) {
+        throw new NotFoundException("Le club n'existe pas ou est désactivé.");
+      }
+    }
 
     if (!membership) {
       throw new ForbiddenException("Vous n'êtes pas membre de ce club.");

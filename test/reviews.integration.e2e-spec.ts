@@ -231,6 +231,40 @@ describe('Module Reviews (e2e)', () => {
 
       expect(response.status).toBe(404);
     });
+
+    it('devrait renvoyer 404 lors du dépôt d’un avis sur un livre inactif pour un READER, mais 201 pour OWNER et ADMIN', async () => {
+      const inactiveBook = await prisma.book.create({
+        data: {
+          title: 'Livre Inactif',
+          author: 'Auteur',
+          genre: 'Genre',
+          pages: 100,
+          clubId: club.id,
+          isActive: false,
+        },
+      });
+
+      // READER : 404
+      authenticateAs(readerUser);
+      let res = await apiRequest()
+        .post(`/clubs/${club.slug}/books/${inactiveBook.id}/reviews`)
+        .send({ rating: 4, comment: 'Commentaire' });
+      expect(res.status).toBe(404);
+
+      // OWNER : 201
+      authenticateAs(ownerUser);
+      res = await apiRequest()
+        .post(`/clubs/${club.slug}/books/${inactiveBook.id}/reviews`)
+        .send({ rating: 5, comment: 'Commentaire Owner' });
+      expect(res.status).toBe(201);
+
+      // ADMIN : 201
+      authenticateAs(adminUser);
+      res = await apiRequest()
+        .post(`/clubs/${club.slug}/books/${inactiveBook.id}/reviews`)
+        .send({ rating: 4, comment: 'Commentaire Admin' });
+      expect(res.status).toBe(201);
+    });
   });
 
   describe('GET /clubs/:clubSlug/books/:bookId/reviews', () => {
@@ -278,6 +312,50 @@ describe('Module Reviews (e2e)', () => {
       );
 
       expect(response.status).toBe(403);
+    });
+
+    it('devrait renvoyer 404 lors de la récupération des avis d’un livre inactif pour un READER, mais 200 pour OWNER et ADMIN', async () => {
+      const inactiveBook = await prisma.book.create({
+        data: {
+          title: 'Livre Inactif',
+          author: 'Auteur',
+          genre: 'Genre',
+          pages: 100,
+          clubId: club.id,
+          isActive: false,
+        },
+      });
+
+      await prisma.review.create({
+        data: {
+          rating: 4,
+          comment: 'Pas mal',
+          userId: ownerUser.id,
+          bookId: inactiveBook.id,
+        },
+      });
+
+      // READER : 404
+      authenticateAs(readerUser);
+      let res = await apiRequest().get(
+        `/clubs/${club.slug}/books/${inactiveBook.id}/reviews`,
+      );
+      expect(res.status).toBe(404);
+
+      // OWNER : 200
+      authenticateAs(ownerUser);
+      res = await apiRequest().get(
+        `/clubs/${club.slug}/books/${inactiveBook.id}/reviews`,
+      );
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(1);
+
+      // ADMIN : 200
+      authenticateAs(adminUser);
+      res = await apiRequest().get(
+        `/clubs/${club.slug}/books/${inactiveBook.id}/reviews`,
+      );
+      expect(res.status).toBe(200);
     });
   });
 

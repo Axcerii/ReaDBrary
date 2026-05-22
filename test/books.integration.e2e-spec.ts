@@ -318,6 +318,45 @@ describe('Module Books (e2e)', () => {
       expect(books[0].title).toBe('Livre Un'); // Order by createdAt desc, page 2 has the first created
     });
 
+    it('devrait masquer les livres inactifs pour READER et EDITOR, mais les afficher pour OWNER et ADMIN', async () => {
+      await prisma.book.create({
+        data: {
+          title: 'Livre Inactif',
+          author: 'Auteur X',
+          genre: 'Mystère',
+          pages: 150,
+          clubId: club.id,
+          isActive: false,
+        },
+      });
+
+      // READER : ne voit que les 3 livres actifs
+      authenticateAs(readerUser);
+      let res = await apiRequest().get(`/clubs/${club.slug}/books`);
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(3);
+      expect(res.body.find((b: any) => b.title === 'Livre Inactif')).toBeUndefined();
+
+      // EDITOR : ne voit que les 3 livres actifs
+      authenticateAs(editorUser);
+      res = await apiRequest().get(`/clubs/${club.slug}/books`);
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(3);
+
+      // OWNER : voit les 4 livres
+      authenticateAs(ownerUser);
+      res = await apiRequest().get(`/clubs/${club.slug}/books`);
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(4);
+      expect(res.body.find((b: any) => b.title === 'Livre Inactif')).toBeDefined();
+
+      // ADMIN : voit les 4 livres
+      authenticateAs(adminUser);
+      res = await apiRequest().get(`/clubs/${club.slug}/books`);
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(4);
+    });
+
     it("devrait interdire l'accès à un non-membre (403)", async () => {
       authenticateAs(nonMemberUser);
 
@@ -364,6 +403,40 @@ describe('Module Books (e2e)', () => {
 
       expect(response.status).toBe(404);
     });
+
+    it('devrait retourner 404 pour un livre inactif pour READER et EDITOR, mais 200 pour OWNER et ADMIN', async () => {
+      const inactiveBook = await prisma.book.create({
+        data: {
+          title: 'Livre Secret Inactif',
+          author: 'Auteur',
+          genre: 'Genre',
+          pages: 150,
+          clubId: club.id,
+          isActive: false,
+        },
+      });
+
+      // READER
+      authenticateAs(readerUser);
+      let res = await apiRequest().get(`/clubs/${club.slug}/books/${inactiveBook.id}`);
+      expect(res.status).toBe(404);
+
+      // EDITOR
+      authenticateAs(editorUser);
+      res = await apiRequest().get(`/clubs/${club.slug}/books/${inactiveBook.id}`);
+      expect(res.status).toBe(404);
+
+      // OWNER
+      authenticateAs(ownerUser);
+      res = await apiRequest().get(`/clubs/${club.slug}/books/${inactiveBook.id}`);
+      expect(res.status).toBe(200);
+      expect(res.body.title).toBe('Livre Secret Inactif');
+
+      // ADMIN
+      authenticateAs(adminUser);
+      res = await apiRequest().get(`/clubs/${club.slug}/books/${inactiveBook.id}`);
+      expect(res.status).toBe(200);
+    });
   });
 
   describe('PATCH /clubs/:clubSlug/books/:id', () => {
@@ -403,6 +476,54 @@ describe('Module Books (e2e)', () => {
         .send({ title: 'Livre Hacked' });
 
       expect(response.status).toBe(403);
+    });
+
+    it('devrait interdire à un EDITOR de modifier isActive (403)', async () => {
+      authenticateAs(editorUser);
+
+      const response = await apiRequest()
+        .patch(`/clubs/${club.slug}/books/${createdBook.id}`)
+        .send({ isActive: false });
+
+      expect(response.status).toBe(403);
+    });
+
+    it('devrait autoriser à un OWNER ou ADMIN de modifier isActive (200)', async () => {
+      // Par l'OWNER
+      authenticateAs(ownerUser);
+      let response = await apiRequest()
+        .patch(`/clubs/${club.slug}/books/${createdBook.id}`)
+        .send({ isActive: false });
+      expect(response.status).toBe(200);
+      expect(response.body.isActive).toBe(false);
+
+      // Par l'ADMIN (réactiver)
+      authenticateAs(adminUser);
+      response = await apiRequest()
+        .patch(`/clubs/${club.slug}/books/${createdBook.id}`)
+        .send({ isActive: true });
+      expect(response.status).toBe(200);
+      expect(response.body.isActive).toBe(true);
+    });
+
+    it('devrait renvoyer 404 si un EDITOR tente de modifier un livre inactif (car invisible pour lui)', async () => {
+      const inactiveBook = await prisma.book.create({
+        data: {
+          title: 'Inactif',
+          author: 'Auteur',
+          genre: 'Genre',
+          pages: 150,
+          clubId: club.id,
+          isActive: false,
+        },
+      });
+
+      authenticateAs(editorUser);
+      const response = await apiRequest()
+        .patch(`/clubs/${club.slug}/books/${inactiveBook.id}`)
+        .send({ title: 'Nouveau titre' });
+
+      expect(response.status).toBe(404);
     });
   });
 
@@ -496,6 +617,37 @@ describe('Module Books (e2e)', () => {
       );
 
       expect(response.status).toBe(403);
+    });
+
+    it('devrait masquer les livres inactifs dans l’export CSV pour READER, mais les inclure pour OWNER', async () => {
+      await prisma.book.create({
+        data: {
+          title: 'Livre Inactif',
+          author: 'Auteur C',
+          genre: 'Genre C',
+          pages: 150,
+          clubId: club.id,
+          isActive: false,
+        },
+      });
+
+      // READER
+      authenticateAs(readerUser);
+      let response = await apiRequest().get(`/clubs/${club.slug}/books/export`);
+      expect(response.status).toBe(200);
+      let csvLines = response.text.trim().split('\n');
+      // En-tête + Livre A + Livre B = 3 lignes
+      expect(csvLines).toHaveLength(3);
+      expect(response.text).not.toContain('Livre Inactif');
+
+      // OWNER
+      authenticateAs(ownerUser);
+      response = await apiRequest().get(`/clubs/${club.slug}/books/export`);
+      expect(response.status).toBe(200);
+      csvLines = response.text.trim().split('\n');
+      // En-tête + Livre A + Livre B + Livre Inactif = 4 lignes
+      expect(csvLines).toHaveLength(4);
+      expect(response.text).toContain('Livre Inactif');
     });
   });
 });

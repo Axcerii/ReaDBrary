@@ -49,6 +49,7 @@ model Club {
   id   String @id @default(uuid())
   name String
   slug String @unique
+  isActive Boolean @default(true)
 
   members ClubMember[]
   books   Book[]
@@ -60,6 +61,7 @@ model Book {
   author    String
   genre     String
   pages     Int
+  isActive  Boolean  @default(true)
   clubId    String
   club      Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())

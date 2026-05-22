@@ -2,6 +2,7 @@ import {
   Injectable,
   ConflictException,
   NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { CreateClubDto } from './dto/create-club.dto';
 import { UpdateClubDto } from './dto/update-club.dto';
@@ -42,29 +43,93 @@ export class ClubsService {
     }
   }
 
-  async findAll() {
-    return this.prisma.club.findMany();
+  async findAll(sessionUser?: { id: string; role: string } | null) {
+    if (sessionUser?.role === 'ADMIN') {
+      return this.prisma.club.findMany();
+    }
+
+    if (sessionUser) {
+      return this.prisma.club.findMany({
+        where: {
+          OR: [
+            { isActive: true },
+            {
+              isActive: false,
+              members: {
+                some: {
+                  userId: sessionUser.id,
+                  role: 'OWNER',
+                },
+              },
+            },
+          ],
+        },
+      });
+    }
+
+    return this.prisma.club.findMany({
+      where: { isActive: true },
+    });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, sessionUser?: { id: string; role: string } | null) {
     const club = await this.prisma.club.findUnique({
       where: { id },
     });
     if (!club) {
       throw new NotFoundException(`Le club avec l'ID "${id}" n'existe pas.`);
     }
+
+    if (!club.isActive) {
+      const isAdmin = sessionUser?.role === 'ADMIN';
+      const membership = sessionUser
+        ? await this.prisma.clubMember.findUnique({
+            where: { userId_clubId: { userId: sessionUser.id, clubId: id } },
+          })
+        : null;
+      const isOwner = membership?.role === 'OWNER';
+
+      if (!isAdmin && !isOwner) {
+        throw new NotFoundException(`Le club avec l'ID "${id}" n'existe pas.`);
+      }
+    }
+
     return club;
   }
 
-  async update(id: string, updateClubDto: UpdateClubDto) {
+  async update(
+    id: string,
+    updateClubDto: UpdateClubDto,
+    sessionUser?: { id: string; role: string } | null,
+  ) {
+    const club = await this.prisma.club.findUnique({ where: { id } });
+    if (!club) {
+      throw new NotFoundException(`Le club avec l'ID "${id}" n'existe pas.`);
+    }
+
+    if (updateClubDto.isActive !== undefined) {
+      if (!sessionUser) {
+        throw new ForbiddenException(
+          "Seuls l'administrateur ou le propriétaire du club peuvent modifier le statut d'activité.",
+        );
+      }
+
+      const isAdmin = sessionUser.role === 'ADMIN';
+      const membership = await this.prisma.clubMember.findUnique({
+        where: { userId_clubId: { userId: sessionUser.id, clubId: id } },
+      });
+      const isOwner = membership?.role === 'OWNER';
+
+      if (!isAdmin && !isOwner) {
+        throw new ForbiddenException(
+          "Seuls l'administrateur ou le propriétaire du club peuvent modifier le statut d'activité.",
+        );
+      }
+    }
+
     const updateData: any = { ...updateClubDto };
     if (updateClubDto.slug) {
       updateData.slug = this.slugify(updateClubDto.slug);
-    } else if (updateClubDto.name && updateClubDto.slug === undefined) {
-      // If updating name and slug is not explicitly provided, we DO NOT automatically change the slug
-      // unless specified, but let's stick to updateData as is. Or wait, if we want to change it we can,
-      // but usually slug stays the same on name update unless requested, or if they specify a new name,
-      // we can optionally update slug or keep it. Let's just keep the existing behavior unless they pass slug.
     }
 
     try {

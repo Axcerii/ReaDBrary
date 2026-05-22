@@ -38,6 +38,7 @@ describe('Module Progression (e2e)', () => {
   let editorUser: User;
   let readerUser: User;
   let nonMemberUser: User;
+  let adminUser: User;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -82,6 +83,9 @@ describe('Module Progression (e2e)', () => {
         name: 'Stranger User',
         role: 'USER',
       },
+    });
+    adminUser = await prisma.user.create({
+      data: { email: 'admin@example.com', name: 'Admin User', role: 'ADMIN' },
     });
 
     // Create club
@@ -251,6 +255,40 @@ describe('Module Progression (e2e)', () => {
 
       expect(response.status).toBe(404);
     });
+
+    it('devrait renvoyer 404 lors de la mise à jour de progression sur un livre inactif pour un READER, mais 200 pour OWNER et ADMIN', async () => {
+      const inactiveBook = await prisma.book.create({
+        data: {
+          title: 'Livre Inactif',
+          author: 'Auteur',
+          genre: 'Genre',
+          pages: 100,
+          clubId: club.id,
+          isActive: false,
+        },
+      });
+
+      // READER
+      authenticateAs(readerUser);
+      let res = await apiRequest()
+        .patch(`/clubs/${club.slug}/books/${inactiveBook.id}/progression`)
+        .send({ currentPage: 20 });
+      expect(res.status).toBe(404);
+
+      // OWNER
+      authenticateAs(ownerUser);
+      res = await apiRequest()
+        .patch(`/clubs/${club.slug}/books/${inactiveBook.id}/progression`)
+        .send({ currentPage: 30 });
+      expect(res.status).toBe(200);
+
+      // ADMIN
+      authenticateAs(adminUser);
+      res = await apiRequest()
+        .patch(`/clubs/${club.slug}/books/${inactiveBook.id}/progression`)
+        .send({ currentPage: 40 });
+      expect(res.status).toBe(200);
+    });
   });
 
   describe('GET /clubs/:clubSlug/books/:bookId/progression', () => {
@@ -303,6 +341,49 @@ describe('Module Progression (e2e)', () => {
       );
 
       expect(response.status).toBe(403);
+    });
+
+    it('devrait renvoyer 404 lors de la lecture de la progression sur un livre inactif pour un READER, mais 200 pour OWNER et ADMIN', async () => {
+      const inactiveBook = await prisma.book.create({
+        data: {
+          title: 'Livre Inactif',
+          author: 'Auteur',
+          genre: 'Genre',
+          pages: 100,
+          clubId: club.id,
+          isActive: false,
+        },
+      });
+
+      await prisma.progression.create({
+        data: {
+          userId: ownerUser.id,
+          bookId: inactiveBook.id,
+          currentPage: 50,
+        },
+      });
+
+      // READER
+      authenticateAs(readerUser);
+      let res = await apiRequest().get(
+        `/clubs/${club.slug}/books/${inactiveBook.id}/progression`,
+      );
+      expect(res.status).toBe(404);
+
+      // OWNER
+      authenticateAs(ownerUser);
+      res = await apiRequest().get(
+        `/clubs/${club.slug}/books/${inactiveBook.id}/progression`,
+      );
+      expect(res.status).toBe(200);
+      expect(res.body.currentPage).toBe(50);
+
+      // ADMIN
+      authenticateAs(adminUser);
+      res = await apiRequest().get(
+        `/clubs/${club.slug}/books/${inactiveBook.id}/progression`,
+      );
+      expect(res.status).toBe(200);
     });
   });
 
@@ -392,6 +473,40 @@ describe('Module Progression (e2e)', () => {
       );
 
       expect(response.status).toBe(403);
+    });
+
+    it('devrait renvoyer 404 lors de la consultation de la progression globale d’un livre inactif pour un EDITOR, mais 200 pour OWNER et ADMIN', async () => {
+      const inactiveBook = await prisma.book.create({
+        data: {
+          title: 'Livre Inactif',
+          author: 'Auteur',
+          genre: 'Genre',
+          pages: 100,
+          clubId: club.id,
+          isActive: false,
+        },
+      });
+
+      // EDITOR
+      authenticateAs(editorUser);
+      let res = await apiRequest().get(
+        `/clubs/${club.slug}/books/${inactiveBook.id}/progressions`,
+      );
+      expect(res.status).toBe(404);
+
+      // OWNER
+      authenticateAs(ownerUser);
+      res = await apiRequest().get(
+        `/clubs/${club.slug}/books/${inactiveBook.id}/progressions`,
+      );
+      expect(res.status).toBe(200);
+
+      // ADMIN
+      authenticateAs(adminUser);
+      res = await apiRequest().get(
+        `/clubs/${club.slug}/books/${inactiveBook.id}/progressions`,
+      );
+      expect(res.status).toBe(200);
     });
   });
 });

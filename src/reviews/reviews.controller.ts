@@ -33,6 +33,12 @@ interface AuthenticatedRequest extends Request {
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
 
+  private getUserStatus(req: AuthenticatedRequest) {
+    const isAdmin = req.userSession?.user?.role === 'ADMIN';
+    const isOwner = req.clubMember?.role === 'OWNER';
+    return { isAdmin, isOwner };
+  }
+
   @Post()
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR, ClubRole.READER)
   async create(
@@ -45,11 +51,13 @@ export class ReviewsController {
     if (!userId) {
       throw new UnauthorizedException('Non authentifié');
     }
+    const userStatus = this.getUserStatus(req);
     return this.reviewsService.create(
       clubSlug,
       bookId,
       userId,
       createReviewDto,
+      userStatus,
     );
   }
 
@@ -58,7 +66,9 @@ export class ReviewsController {
   async findAll(
     @Param('clubSlug') clubSlug: string,
     @Param('bookId') bookId: string,
+    @Req() req: AuthenticatedRequest,
   ) {
-    return this.reviewsService.findAll(clubSlug, bookId);
+    const userStatus = this.getUserStatus(req);
+    return this.reviewsService.findAll(clubSlug, bookId, userStatus);
   }
 }
