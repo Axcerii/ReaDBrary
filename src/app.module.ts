@@ -12,6 +12,7 @@ import { BooksModule } from './books/books.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { ProgressionModule } from './progression/progression.module';
 import { AdminModule } from './admin/admin.module';
+import { PagesModule } from './pages/pages.module';
 import { AuthLoggerMiddleware } from './auth/middleware/auth-logger.middleware';
 
 @Module({
@@ -25,6 +26,7 @@ import { AuthLoggerMiddleware } from './auth/middleware/auth-logger.middleware';
     ReviewsModule,
     ProgressionModule,
     AdminModule,
+    PagesModule,
   ],
   controllers: [AppController],
   providers: [

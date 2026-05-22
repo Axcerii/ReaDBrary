@@ -68,6 +68,7 @@ model Book {
   updatedAt    DateTime      @updatedAt
   reviews      Review[]
   progressions Progression[]
+  bookPages    Page[]
 }
 
 model ClubMember {
@@ -157,4 +158,18 @@ model Progression {
   book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
   @@unique([userId, bookId])
+}
+
+model Page {
+  id        String   @id @default(uuid())
+  index     Int
+  title     String
+  text      String
+  image     String?
+  bookId    String
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([bookId, index])
 }

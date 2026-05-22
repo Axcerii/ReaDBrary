@@ -82,9 +82,19 @@ export class ProgressionService {
         ? Math.round((progression.currentPage / book.pages) * 100)
         : 0;
 
+    const pageDetails = await this.prisma.page.findUnique({
+      where: {
+        bookId_index: {
+          bookId,
+          index: progression.currentPage,
+        },
+      },
+    });
+
     return {
       ...progression,
       progressPercentage,
+      currentPageDetails: pageDetails || null,
     };
   }
 
@@ -110,6 +120,17 @@ export class ProgressionService {
     const progressPercentage =
       book.pages > 0 ? Math.round((currentPage / book.pages) * 100) : 0;
 
+    const pageDetails = currentPage > 0
+      ? await this.prisma.page.findUnique({
+          where: {
+            bookId_index: {
+              bookId,
+              index: currentPage,
+            },
+          },
+        })
+      : null;
+
     if (!progression) {
       return {
         id: null,
@@ -119,12 +140,14 @@ export class ProgressionService {
         createdAt: null,
         updatedAt: null,
         progressPercentage,
+        currentPageDetails: null,
       };
     }
 
     return {
       ...progression,
       progressPercentage,
+      currentPageDetails: pageDetails || null,
     };
   }
 
