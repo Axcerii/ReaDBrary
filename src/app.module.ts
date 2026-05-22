@@ -2,6 +2,7 @@ import { Module, ValidationPipe, NestModule, MiddlewareConsumer } from '@nestjs/
 import { ConfigModule } from '@nestjs/config';
 import { APP_PIPE } from '@nestjs/core';
 import { AppController } from './app.controller';
+import { AuthController } from './auth/auth.controller';
 import { AppService } from './app.service';
 import { auth } from './auth/auth'; // Your Better Auth instance
 import { AuthModule } from '@thallesp/nestjs-better-auth';
@@ -28,7 +29,7 @@ import { AuthLoggerMiddleware } from './auth/middleware/auth-logger.middleware';
     AdminModule,
     PagesModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, AuthController],
   providers: [
     AppService,
     {

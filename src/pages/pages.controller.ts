@@ -23,6 +23,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { Request } from 'express';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 
 interface BetterAuthSession {
   user: {
@@ -40,6 +41,8 @@ interface AuthenticatedRequest extends Request {
   userSession?: BetterAuthSession;
 }
 
+@ApiTags('Pages')
+@ApiBearerAuth()
 @Controller('clubs/:clubSlug/books/:bookId/pages')
 @UseGuards(ClubRolesGuard)
 export class PagesController {
@@ -53,6 +56,9 @@ export class PagesController {
 
   @Post()
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR)
+  @ApiOperation({ summary: 'Crée une nouvelle page dans un livre et décale les pages suivantes vers le haut' })
+  @ApiResponse({ status: 201, description: 'Page créée avec succès.' })
+  @ApiResponse({ status: 400, description: 'Index de page invalide.' })
   async create(
     @Param('clubSlug') clubSlug: string,
     @Param('bookId') bookId: string,
@@ -82,6 +88,20 @@ export class PagesController {
       }),
     }),
   )
+  @ApiOperation({ summary: 'Uploade une image pour une page' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Image uploadée avec succès, retourne l\'URL de l\'image.' })
   async uploadFile(@UploadedFile() file: any) {
     if (!file) {
       throw new BadRequestException('Aucun fichier fourni.');
@@ -93,6 +113,8 @@ export class PagesController {
 
   @Get()
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR, ClubRole.READER)
+  @ApiOperation({ summary: 'Liste les pages d\'un livre avec pagination (max 50)' })
+  @ApiResponse({ status: 200, description: 'Liste des pages retournée avec succès.' })
   async findAll(
     @Param('clubSlug') clubSlug: string,
     @Param('bookId') bookId: string,
@@ -113,6 +135,9 @@ export class PagesController {
 
   @Get(':index')
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR, ClubRole.READER)
+  @ApiOperation({ summary: 'Récupère une page par son index' })
+  @ApiResponse({ status: 200, description: 'Page retournée avec succès.' })
+  @ApiResponse({ status: 404, description: 'Page non trouvée.' })
   async findOne(
     @Param('clubSlug') clubSlug: string,
     @Param('bookId') bookId: string,
@@ -130,6 +155,8 @@ export class PagesController {
 
   @Patch(':index')
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR)
+  @ApiOperation({ summary: 'Met à jour les informations d\'une page et gère les décalages d\'index si l\'index est modifié' })
+  @ApiResponse({ status: 200, description: 'Page mise à jour avec succès.' })
   async update(
     @Param('clubSlug') clubSlug: string,
     @Param('bookId') bookId: string,
@@ -149,6 +176,8 @@ export class PagesController {
 
   @Delete(':index')
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR)
+  @ApiOperation({ summary: 'Supprime une page et décale les suivantes vers le bas' })
+  @ApiResponse({ status: 200, description: 'Page supprimée avec succès.' })
   async remove(
     @Param('clubSlug') clubSlug: string,
     @Param('bookId') bookId: string,
