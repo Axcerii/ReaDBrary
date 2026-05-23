@@ -11,6 +11,13 @@ import { Progression } from '../../generated/prisma/client';
 export class ProgressionService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * Récupère l'identifiant d'un club de lecture à partir de son slug unique.
+   * 
+   * @param slug Le slug unique du club
+   * @throws NotFoundException Si le club n'existe pas
+   * @returns L'identifiant (ID) du club
+   */
   private async getClubIdBySlug(slug: string): Promise<string> {
     const club = await this.prisma.club.findUnique({
       where: { slug },
@@ -23,6 +30,16 @@ export class ProgressionService {
     return club.id;
   }
 
+  /**
+   * Valide et récupère un livre au sein d'un club.
+   * Gère la restriction de visibilité si le livre est inactif.
+   * 
+   * @param clubId L'identifiant du club
+   * @param bookId L'identifiant du livre
+   * @param userStatus Le statut d'administration globale ou de propriétaire du club de l'utilisateur
+   * @throws NotFoundException Si le livre n'existe pas ou s'il est inactif et inaccessible
+   * @returns Le livre trouvé
+   */
   private async findBookInClub(
     clubId: string,
     bookId: string,
@@ -44,6 +61,18 @@ export class ProgressionService {
     return book;
   }
 
+  /**
+   * Met à jour (ou crée) le marque-page de progression d'un utilisateur sur un livre.
+   * Calcule le pourcentage de progression et fournit le contenu textuel et image de la page courante.
+   * 
+   * @param clubSlug Le slug du club de lecture
+   * @param bookId L'identifiant du livre
+   * @param userId L'identifiant de l'utilisateur
+   * @param updateDto Le nouvel index de page courante
+   * @param userStatus Le statut d'accès de l'utilisateur demandeur
+   * @throws BadRequestException Si l'index de la page courante dépasse le nombre de pages du livre
+   * @returns L'état de progression mis à jour avec le pourcentage et les détails de la page
+   */
   async updateProgression(
     clubSlug: string,
     bookId: string,
@@ -98,6 +127,16 @@ export class ProgressionService {
     };
   }
 
+  /**
+   * Récupère la progression d'un membre sur un livre de club.
+   * Renvoie également les métadonnées de la page en cours.
+   * 
+   * @param clubSlug Le slug du club
+   * @param bookId L'identifiant du livre
+   * @param userId L'identifiant du membre concerné
+   * @param userStatus Le statut d'accès de l'utilisateur demandeur
+   * @returns L'état de progression du membre
+   */
   async getProgression(
     clubSlug: string,
     bookId: string,
@@ -151,6 +190,15 @@ export class ProgressionService {
     };
   }
 
+  /**
+   * Récupère la progression de lecture de TOUS les membres d'un club de lecture pour un livre donné.
+   * Cette méthode est réservée aux propriétaires de clubs et aux éditeurs.
+   * 
+   * @param clubSlug Le slug du club
+   * @param bookId L'identifiant du livre
+   * @param userStatus Le statut d'accès de l'utilisateur demandeur
+   * @returns Un tableau des progressions de tous les membres avec leurs profils utilisateur
+   */
   async getGlobalProgressions(
     clubSlug: string,
     bookId: string,

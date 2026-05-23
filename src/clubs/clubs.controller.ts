@@ -7,10 +7,12 @@ import {
   Param,
   Delete,
   Req,
+  Query,
 } from '@nestjs/common';
 import { ClubsService } from './clubs.service';
 import { CreateClubDto } from './dto/create-club.dto';
 import { UpdateClubDto } from './dto/update-club.dto';
+import { ClubQueryDto } from './dto/club-query.dto';
 import { Request } from 'express';
 import { auth } from '../auth/auth';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
@@ -49,11 +51,11 @@ export class ClubsController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Liste tous les clubs de lecture (publics ou selon les droits du membre)' })
+  @ApiOperation({ summary: 'Liste tous les clubs de lecture (publics ou selon les droits du membre) avec filtres et pagination' })
   @ApiResponse({ status: 200, description: 'Liste des clubs retournée.' })
-  async findAll(@Req() req: Request) {
+  async findAll(@Query() query: ClubQueryDto, @Req() req: Request) {
     const sessionUser = await this.getSessionUser(req);
-    return this.clubsService.findAll(sessionUser);
+    return this.clubsService.findAll(query, sessionUser);
   }
 
   @Get(':id')

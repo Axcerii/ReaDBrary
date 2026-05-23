@@ -223,6 +223,41 @@ describe('Module Clubs (e2e)', () => {
       expect(resOther.status).toBe(200);
       expect(resOther.body).toHaveLength(0);
     });
+
+    it('devrait filtrer les clubs par nom (insensible à la casse)', async () => {
+      await prisma.club.createMany({
+        data: [
+          { name: 'NestJS Book Club', slug: 'nestjs-book-club', isActive: true },
+          { name: 'React Readers', slug: 'react-readers', isActive: true },
+          { name: 'Vue Enthusiasts', slug: 'vue-enthusiasts', isActive: true },
+        ],
+      });
+
+      const response = await apiRequest().get('/clubs?name=nestjs');
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveLength(1);
+      expect(response.body[0].name).toBe('NestJS Book Club');
+    });
+
+    it('devrait paginer les clubs retournés', async () => {
+      await prisma.club.createMany({
+        data: [
+          { name: 'Club A', slug: 'club-a', isActive: true },
+          { name: 'Club B', slug: 'club-b', isActive: true },
+          { name: 'Club C', slug: 'club-c', isActive: true },
+          { name: 'Club D', slug: 'club-d', isActive: true },
+          { name: 'Club E', slug: 'club-e', isActive: true },
+        ],
+      });
+
+      const response = await apiRequest().get('/clubs?page=2&limit=2');
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveLength(2);
+      // Trié par nom ascendant: Club A, Club B, Club C, Club D, Club E
+      // Page 2 avec limite 2 saute les 2 premiers (A, B) et prend les 2 suivants (C, D)
+      expect(response.body[0].name).toBe('Club C');
+      expect(response.body[1].name).toBe('Club D');
+    });
   });
 
   describe('GET /clubs/:id', () => {

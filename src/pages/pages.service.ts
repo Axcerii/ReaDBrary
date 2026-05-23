@@ -11,6 +11,13 @@ import { UpdatePageDto } from './dto/update-page.dto';
 export class PagesService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * Récupère l'identifiant d'un club de lecture à partir de son slug unique.
+   * 
+   * @param slug Le slug unique du club
+   * @throws NotFoundException Si le club n'existe pas
+   * @returns L'identifiant (ID) du club
+   */
   private async getClubIdBySlug(slug: string): Promise<string> {
     const club = await this.prisma.club.findUnique({
       where: { slug },
@@ -23,6 +30,15 @@ export class PagesService {
     return club.id;
   }
 
+  /**
+   * Vérifie et récupère un livre appartenant à un club en validant sa visibilité d'activité.
+   * 
+   * @param clubId L'identifiant du club
+   * @param bookId L'identifiant du livre
+   * @param userStatus Le statut d'administration globale ou de propriétaire de club
+   * @throws NotFoundException Si le livre n'existe pas ou s'il est inactif et inaccessible
+   * @returns Le livre s'il est trouvé
+   */
   private async findBookInClub(
     clubId: string,
     bookId: string,
@@ -44,6 +60,18 @@ export class PagesService {
     return book;
   }
 
+  /**
+   * Crée une nouvelle page à l'intérieur d'un livre.
+   * Décale les index des pages suivantes d'une position vers le haut (transactionnel)
+   * afin d'éviter tout doublon d'index dans la base de données.
+   * 
+   * @param clubSlug Le slug du club de lecture
+   * @param bookId L'identifiant du livre
+   * @param createDto Les données de la page (index, titre, texte, image optionnelle)
+   * @param userStatus Le statut d'accès de l'utilisateur demandeur
+   * @throws BadRequestException Si l'index est hors limites (doit être entre 1 et total+1)
+   * @returns La page nouvellement créée
+   */
   async create(
     clubSlug: string,
     bookId: string,
@@ -103,6 +131,16 @@ export class PagesService {
     });
   }
 
+  /**
+   * Récupère la liste des pages d'un livre sous forme de résultats paginés.
+   * La taille de page (limite) maximale autorisée est de 50.
+   * 
+   * @param clubSlug Le slug du club
+   * @param bookId L'identifiant du livre
+   * @param query Les options de pagination (page, limit)
+   * @param userStatus Le statut d'accès de l'utilisateur demandeur
+   * @returns Un objet paginé contenant la liste de pages et les métadonnées de pagination
+   */
   async findAll(
     clubSlug: string,
     bookId: string,
@@ -138,6 +176,16 @@ export class PagesService {
     };
   }
 
+  /**
+   * Récupère une page spécifique du livre par son index de page.
+   * 
+   * @param clubSlug Le slug du club
+   * @param bookId L'identifiant du livre
+   * @param index L'index de la page (1-indexed)
+   * @param userStatus Le statut d'accès de l'utilisateur demandeur
+   * @throws NotFoundException Si la page à cet index n'existe pas
+   * @returns La page trouvée
+   */
   async findOne(
     clubSlug: string,
     bookId: string,
@@ -163,6 +211,21 @@ export class PagesService {
     return page;
   }
 
+  /**
+   * Met à jour une page existante.
+   * Si l'index est modifié, décale de manière transactionnelle les autres pages
+   * (vers le haut ou le bas selon la direction) pour préserver la séquence contiguë
+   * sans conflit d'index unique.
+   * 
+   * @param clubSlug Le slug du club de lecture
+   * @param bookId L'identifiant du livre
+   * @param index L'index actuel de la page à modifier
+   * @param updateDto Les nouvelles données à appliquer
+   * @param userStatus Le statut d'accès de l'utilisateur demandeur
+   * @throws NotFoundException Si la page n'existe pas
+   * @throws BadRequestException Si le nouvel index est hors limites (doit être entre 1 et total)
+   * @returns La page mise à jour
+   */
   async update(
     clubSlug: string,
     bookId: string,
@@ -260,6 +323,18 @@ export class PagesService {
     });
   }
 
+  /**
+   * Supprime une page spécifique et décale (vers le bas) les pages suivantes
+   * pour combler le trou, de façon transactionnelle.
+   * Met à jour également le nombre total de pages du livre.
+   * 
+   * @param clubSlug Le slug du club de lecture
+   * @param bookId L'identifiant du livre
+   * @param index L'index de la page à supprimer
+   * @param userStatus Le statut d'accès de l'utilisateur demandeur
+   * @throws NotFoundException Si la page à supprimer n'existe pas
+   * @returns Un message de confirmation de la suppression
+   */
   async remove(
     clubSlug: string,
     bookId: string,

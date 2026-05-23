@@ -1,3 +1,11 @@
+jest.mock('../auth/auth', () => ({
+  auth: {
+    api: {
+      getSession: jest.fn(),
+    },
+  },
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { ClubsController } from './clubs.controller';
 import { ClubsService } from './clubs.service';
