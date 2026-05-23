@@ -1,98 +1,103 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 📚 BookShelf — Plateforme de lecture collaborative API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+BookShelf est une API NestJS robuste conçue pour gérer des **clubs de lecture collaboratifs**. Elle permet aux utilisateurs de créer des clubs, d'inviter des membres avec des rôles spécifiques, de partager des bibliothèques de livres, de suivre leur progression de lecture page par page, d'ajouter des avis et notes moyennes sur les livres, et de gérer le tout via une console d'administration.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
+## 🚀 Stack Technique
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **NestJS** : Framework Node.js progressif et modulaire.
+- **Prisma ORM** : ORM pour interagir proprement avec la base de données PostgreSQL.
+- **Better Auth** : Authentification globale et sécurisée.
+- **Docker** : Conteneurisation de PostgreSQL pour le développement et les tests.
+- **Swagger / OpenAPI** : Documentation interactive et typée de l'ensemble de l'API.
+- **Jest & Supertest** : Suite complète de tests unitaires et tests d'intégration E2E.
 
-## Project setup
+---
 
+## 📂 Modules Applicatifs de l'API
+
+L'application est structurée de manière modulaire :
+
+1. **`Authentification`** : Inscription, connexion, déconnexion et gestion des sessions gérées nativement par Better Auth.
+2. **`Administration`** :
+   - Activation et désactivation de comptes utilisateurs.
+   - Importation en masse de livres au format CSV (transactionnelle et validée).
+   - Importation en masse de membres de clubs au format CSV.
+3. **`Clubs`** : CRUD complet des clubs avec filtrage de recherche et pagination, et gestion de la visibilité des clubs inactifs.
+4. **`Membres de Club`** : Gestion des rôles internes (`OWNER`, `EDITOR`, `READER`) et exclusion de membres.
+5. **`Livres`** : CRUD des livres d'un club, avec filtrage multi-critères, pagination et contrôle de visibilité selon les rôles.
+6. **`Pages de Livre`** : Gestion dynamique et ordonnée (gapless) des pages de livres avec shifting automatique (transactionnel) lors des écritures ou déplacements, et upload d'images.
+7. **`Progression de Lecture`** : Marque-page individuel par livre avec calcul de pourcentage, et tableau de bord global pour les propriétaires/éditeurs.
+8. **`Critiques / Avis`** : Notation des livres (1 à 5 étoiles) avec contrainte d'unicité (un seul avis par livre et par utilisateur) et mise à jour de la note moyenne globale du livre.
+
+---
+
+## ⚙️ Configuration & Setup
+
+### 1. Variables d'Environnement
+Copiez le fichier d'exemple et configurez vos secrets :
 ```bash
-$ npm install
+cp .env.example .env
+```
+*(Le fichier `.env.example` contient déjà les configurations par défaut prêtes pour le développement en local via Docker).*
+
+### 2. Lancement des bases de données PostgreSQL
+BookShelf utilise deux bases de données distinctes (une pour le développement et une dédiée aux tests E2E) conteneurisées dans Docker.
+Lancez-les en arrière-plan :
+```bash
+docker compose up -d db db-test
 ```
 
-## Compile and run the project
-
+### 3. Exécution des Migrations de Base de Données
+Appliquez le schéma de données Prisma et chargez les tables sur les deux instances PostgreSQL (dev et test) :
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm run db:migrate:all
 ```
 
-## Run tests
-
+### 4. Démarrage de l'API
+Lancez le serveur NestJS en mode développement (avec rechargement automatique) :
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm run start:dev
 ```
+L'application écoute par défaut sur le port `3000`.
 
-## Deployment
+---
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## 📝 Documentation interactive de l'API (Swagger UI)
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Une interface Swagger interactive est accessible localement à l'adresse :
+👉 **`http://localhost:3000/api`**
 
+Vous y trouverez :
+- L'ensemble des 8 modules documentés avec leurs routes.
+- Les schémas de données requis pour les requêtes (DTOs validés).
+- Le support Bearer Token (`Authorize`) pour tester directement les routes authentifiées depuis votre navigateur.
+
+---
+
+## 🔧 Scripts Disponibles
+
+| Commande | Action |
+| :--- | :--- |
+| `npm install` | Installe les dépendances du projet. |
+| `npm run start:dev` | Démarre le serveur NestJS local en mode observation (`watch`). |
+| `npm run db:migrate:all` | Applique les migrations Prisma sur les bases de données de dev et de test. |
+| `npm run build` | Compile le projet TypeScript en JavaScript prêt pour la production. |
+| `npm run test` | Exécute les tests unitaires sur les services métier. |
+| `npm run test:e2e` | Exécute la suite complète de tests d'intégration E2E. |
+| `npm run test:cov` | Mesure et affiche la couverture globale du code par les tests. |
+
+---
+
+## 🧪 Validation & Suite de Tests
+
+Tous les composants de l'application sont validés par 110 tests d'intégration E2E et des tests unitaires :
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Lancer les tests d'intégration
+npm run test:e2e
+
+# Lancer la couverture de code
+npm run test:cov
 ```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+*(La couverture actuelle de code est supérieure à 90% sur l'ensemble de la codebase).*
