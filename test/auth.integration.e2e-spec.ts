@@ -17,7 +17,7 @@ jest.mock('../src/auth/auth', () => ({
   },
 }));
 
-describe('Authentification (e2e)', () => {
+describe('Authentication (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
 
@@ -57,7 +57,7 @@ describe('Authentification (e2e)', () => {
     await app.close();
   });
 
-  it('devrait démarrer le serveur avec Better Auth mocké', () => {
+  it('should start the server with mocked Better Auth', () => {
     expect(app).toBeDefined();
   });
 });

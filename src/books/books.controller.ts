@@ -38,7 +38,7 @@ interface AuthenticatedRequest extends Request {
   userSession?: BetterAuthSession;
 }
 
-@ApiTags('Livres')
+@ApiTags('Books')
 @ApiBearerAuth()
 @Controller('clubs/:clubSlug/books')
 @UseGuards(ClubRolesGuard)
@@ -53,8 +53,8 @@ export class BooksController {
 
   @Post()
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR)
-  @ApiOperation({ summary: 'Crée un livre dans un club' })
-  @ApiResponse({ status: 201, description: 'Livre créé avec succès.' })
+  @ApiOperation({ summary: 'Create a book in a club' })
+  @ApiResponse({ status: 201, description: 'Book created successfully.' })
   async create(
     @Param('clubSlug') clubSlug: string,
     @Body() createBookDto: CreateBookDto,
@@ -64,8 +64,8 @@ export class BooksController {
 
   @Get()
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR, ClubRole.READER)
-  @ApiOperation({ summary: 'Liste les livres d\'un club avec filtres et pagination' })
-  @ApiResponse({ status: 200, description: 'Liste des livres retournée avec succès.' })
+  @ApiOperation({ summary: 'List books of a club with filters and pagination' })
+  @ApiResponse({ status: 200, description: 'List of books returned successfully.' })
   async findAll(
     @Param('clubSlug') clubSlug: string,
     @Query() query: BookQueryDto,
@@ -77,8 +77,8 @@ export class BooksController {
 
   @Get('export')
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR, ClubRole.READER)
-  @ApiOperation({ summary: 'Exporte la bibliothèque d\'un club au format CSV' })
-  @ApiResponse({ status: 200, description: 'Fichier CSV retourné.' })
+  @ApiOperation({ summary: 'Export a club library in CSV format' })
+  @ApiResponse({ status: 200, description: 'CSV file returned.' })
   async exportCsv(
     @Param('clubSlug') clubSlug: string,
     @Res({ passthrough: true }) res: Response,
@@ -96,9 +96,9 @@ export class BooksController {
 
   @Get(':id')
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR, ClubRole.READER)
-  @ApiOperation({ summary: 'Récupère un livre par son identifiant' })
-  @ApiResponse({ status: 200, description: 'Livre retourné avec succès.' })
-  @ApiResponse({ status: 404, description: 'Livre non trouvé.' })
+  @ApiOperation({ summary: 'Get a book by its ID' })
+  @ApiResponse({ status: 200, description: 'Book returned successfully.' })
+  @ApiResponse({ status: 404, description: 'Book not found.' })
   async findOne(
     @Param('clubSlug') clubSlug: string,
     @Param('id') id: string,
@@ -110,9 +110,9 @@ export class BooksController {
 
   @Patch(':id')
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR)
-  @ApiOperation({ summary: 'Met à jour un livre (modification de ses propriétés ou de son statut d\'activité)' })
-  @ApiResponse({ status: 200, description: 'Livre mis à jour avec succès.' })
-  @ApiResponse({ status: 403, description: 'Interdit pour un EDITOR de modifier isActive.' })
+  @ApiOperation({ summary: 'Update a book (modify its properties or activity status)' })
+  @ApiResponse({ status: 200, description: 'Book updated successfully.' })
+  @ApiResponse({ status: 403, description: 'Forbidden for an EDITOR to modify isActive.' })
   async update(
     @Param('clubSlug') clubSlug: string,
     @Param('id') id: string,
@@ -125,8 +125,8 @@ export class BooksController {
 
   @Delete(':id')
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR)
-  @ApiOperation({ summary: 'Supprime un livre du club' })
-  @ApiResponse({ status: 200, description: 'Livre supprimé avec succès.' })
+  @ApiOperation({ summary: 'Delete a book from the club' })
+  @ApiResponse({ status: 200, description: 'Book deleted successfully.' })
   async remove(
     @Param('clubSlug') clubSlug: string,
     @Param('id') id: string,

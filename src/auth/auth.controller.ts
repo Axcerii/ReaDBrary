@@ -4,23 +4,23 @@ import { AllowAnonymous } from '@thallesp/nestjs-better-auth';
 import { SignUpEmailDto } from './dto/sign-up.dto';
 import { SignInEmailDto } from './dto/sign-in.dto';
 
-@ApiTags('Authentification')
+@ApiTags('Authentication')
 @AllowAnonymous()
 @Controller('api/auth')
 export class AuthController {
   @Post('sign-up/email')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Inscription avec email et mot de passe',
-    description: 'Crée un nouveau compte utilisateur.',
+    summary: 'Sign up with email and password',
+    description: 'Creates a new user account.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Inscription réussie et session créée.',
+    description: 'Successful sign up and session created.',
   })
   @ApiResponse({
     status: 400,
-    description: 'Données d\'inscription invalides ou email déjà utilisé.',
+    description: 'Invalid sign up data or email already in use.',
   })
   signUp(@Body() signUpDto: SignUpEmailDto) {
     // Cette route est interceptée et traitée par le middleware Better Auth.
@@ -31,16 +31,16 @@ export class AuthController {
   @Post('sign-in/email')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Connexion avec email et mot de passe',
-    description: 'Connecte un utilisateur existant et génère une session.',
+    summary: 'Sign in with email and password',
+    description: 'Authenticates an existing user and generates a session.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Connexion réussie et session créée.',
+    description: 'Successful sign in and session created.',
   })
   @ApiResponse({
     status: 400,
-    description: 'Identifiants de connexion invalides.',
+    description: 'Invalid credentials.',
   })
   signIn(@Body() signInDto: SignInEmailDto) {
     // Cette route est interceptée et traitée par le middleware Better Auth.
@@ -51,12 +51,12 @@ export class AuthController {
   @Post('sign-out')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Déconnexion de l\'utilisateur',
-    description: 'Détruit la session de l\'utilisateur connecté.',
+    summary: 'Sign out user',
+    description: 'Destroys the active user session.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Déconnexion réussie.',
+    description: 'Successfully signed out.',
   })
   signOut() {
     // Cette route est interceptée et traitée par le middleware Better Auth.
@@ -66,16 +66,16 @@ export class AuthController {
 
   @Get('get-session')
   @ApiOperation({
-    summary: 'Récupérer la session active',
-    description: 'Renvoie les informations sur la session et l\'utilisateur actuellement connectés.',
+    summary: 'Get active session',
+    description: 'Returns information about the currently active session and user.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Détails de la session active retournés.',
+    description: 'Active session details returned successfully.',
   })
   @ApiResponse({
     status: 401,
-    description: 'Aucune session active trouvée.',
+    description: 'No active session found.',
   })
   getSession() {
     // Cette route est interceptée et traitée par le middleware Better Auth.

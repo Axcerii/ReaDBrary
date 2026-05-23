@@ -56,9 +56,9 @@ export class PagesController {
 
   @Post()
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR)
-  @ApiOperation({ summary: 'Crée une nouvelle page dans un livre et décale les pages suivantes vers le haut' })
-  @ApiResponse({ status: 201, description: 'Page créée avec succès.' })
-  @ApiResponse({ status: 400, description: 'Index de page invalide.' })
+  @ApiOperation({ summary: 'Create a new page in a book and shift subsequent pages up' })
+  @ApiResponse({ status: 201, description: 'Page created successfully.' })
+  @ApiResponse({ status: 400, description: 'Invalid page index.' })
   async create(
     @Param('clubSlug') clubSlug: string,
     @Param('bookId') bookId: string,
@@ -88,7 +88,7 @@ export class PagesController {
       }),
     }),
   )
-  @ApiOperation({ summary: 'Uploade une image pour une page' })
+  @ApiOperation({ summary: 'Upload an image for a page' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -101,10 +101,10 @@ export class PagesController {
       },
     },
   })
-  @ApiResponse({ status: 201, description: 'Image uploadée avec succès, retourne l\'URL de l\'image.' })
+  @ApiResponse({ status: 201, description: 'Image uploaded successfully, returns image URL.' })
   async uploadFile(@UploadedFile() file: any) {
     if (!file) {
-      throw new BadRequestException('Aucun fichier fourni.');
+      throw new BadRequestException('No file provided.');
     }
     return {
       url: `/uploads/${file.filename}`,
@@ -113,8 +113,8 @@ export class PagesController {
 
   @Get()
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR, ClubRole.READER)
-  @ApiOperation({ summary: 'Liste les pages d\'un livre avec pagination (max 50)' })
-  @ApiResponse({ status: 200, description: 'Liste des pages retournée avec succès.' })
+  @ApiOperation({ summary: 'List pages of a book with pagination (max 50)' })
+  @ApiResponse({ status: 200, description: 'List of pages returned successfully.' })
   async findAll(
     @Param('clubSlug') clubSlug: string,
     @Param('bookId') bookId: string,
@@ -135,9 +135,9 @@ export class PagesController {
 
   @Get(':index')
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR, ClubRole.READER)
-  @ApiOperation({ summary: 'Récupère une page par son index' })
-  @ApiResponse({ status: 200, description: 'Page retournée avec succès.' })
-  @ApiResponse({ status: 404, description: 'Page non trouvée.' })
+  @ApiOperation({ summary: 'Get a page by its index' })
+  @ApiResponse({ status: 200, description: 'Page returned successfully.' })
+  @ApiResponse({ status: 404, description: 'Page not found.' })
   async findOne(
     @Param('clubSlug') clubSlug: string,
     @Param('bookId') bookId: string,
@@ -155,8 +155,8 @@ export class PagesController {
 
   @Patch(':index')
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR)
-  @ApiOperation({ summary: 'Met à jour les informations d\'une page et gère les décalages d\'index si l\'index est modifié' })
-  @ApiResponse({ status: 200, description: 'Page mise à jour avec succès.' })
+  @ApiOperation({ summary: 'Update a page and handle index shifting if the index is modified' })
+  @ApiResponse({ status: 200, description: 'Page updated successfully.' })
   async update(
     @Param('clubSlug') clubSlug: string,
     @Param('bookId') bookId: string,
@@ -176,8 +176,8 @@ export class PagesController {
 
   @Delete(':index')
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR)
-  @ApiOperation({ summary: 'Supprime une page et décale les suivantes vers le bas' })
-  @ApiResponse({ status: 200, description: 'Page supprimée avec succès.' })
+  @ApiOperation({ summary: 'Delete a page and shift subsequent pages down' })
+  @ApiResponse({ status: 200, description: 'Page deleted successfully.' })
   async remove(
     @Param('clubSlug') clubSlug: string,
     @Param('bookId') bookId: string,

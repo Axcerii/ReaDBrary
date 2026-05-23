@@ -18,7 +18,7 @@ jest.mock('../src/auth/auth', () => ({
   },
 }));
 
-describe('Module Club Members (e2e)', () => {
+describe('Club Members Module (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
 
@@ -55,7 +55,7 @@ describe('Module Club Members (e2e)', () => {
   });
 
   describe('POST /clubs/:clubSlug/members', () => {
-    it('devrait ajouter un membre avec un rôle spécifié', async () => {
+    it('should add a member with a specified role', async () => {
       const club = await prisma.club.create({
         data: { name: 'Club Lecture', slug: 'club-lecture' },
       });
@@ -83,7 +83,7 @@ describe('Module Club Members (e2e)', () => {
       expect(membership?.role).toBe('EDITOR');
     });
 
-    it('devrait ajouter un membre avec le rôle par défaut READER si non fourni', async () => {
+    it('should add a member with the default READER role if not provided', async () => {
       const club = await prisma.club.create({
         data: { name: 'Club Philo', slug: 'club-philo' },
       });
@@ -99,7 +99,7 @@ describe('Module Club Members (e2e)', () => {
       expect(response.body.role).toBe('READER');
     });
 
-    it("devrait échouer avec 409 Conflict si l'utilisateur est déjà membre", async () => {
+    it('should fail with 409 Conflict if the user is already a member', async () => {
       const club = await prisma.club.create({
         data: { name: 'Club Duplicata', slug: 'club-duplicata' },
       });
@@ -118,7 +118,7 @@ describe('Module Club Members (e2e)', () => {
       expect(response.body.message).toContain('déjà membre');
     });
 
-    it("devrait échouer avec 404 Not Found si le club n'existe pas", async () => {
+    it('should fail with 404 Not Found if the club does not exist', async () => {
       const user = await prisma.user.create({
         data: { email: 'test@example.com' },
       });
@@ -131,7 +131,7 @@ describe('Module Club Members (e2e)', () => {
       expect(response.body.message).toContain('club');
     });
 
-    it("devrait échouer avec 404 Not Found si l'utilisateur n'existe pas", async () => {
+    it('should fail with 404 Not Found if the user does not exist', async () => {
       const club = await prisma.club.create({
         data: { name: 'Club Test', slug: 'club-test' },
       });
@@ -146,7 +146,7 @@ describe('Module Club Members (e2e)', () => {
   });
 
   describe('GET /clubs/:clubSlug/members', () => {
-    it('devrait retourner la liste des membres du club', async () => {
+    it('should return the list of club members', async () => {
       const club = await prisma.club.create({
         data: { name: 'Club Alpha', slug: 'club-alpha' },
       });
@@ -175,7 +175,7 @@ describe('Module Club Members (e2e)', () => {
       expect(response.body[1].user.name).toBe('Two');
     });
 
-    it("devrait renvoyer 404 Not Found si le club n'existe pas", async () => {
+    it('should return 404 Not Found if the club does not exist', async () => {
       const response = await request(app.getHttpServer()).get(
         '/clubs/non-existent-club-slug/members',
       );
@@ -185,7 +185,7 @@ describe('Module Club Members (e2e)', () => {
   });
 
   describe('PATCH /clubs/:clubSlug/members/:userId', () => {
-    it("devrait mettre à jour le rôle d'un membre", async () => {
+    it('should update a member role', async () => {
       const club = await prisma.club.create({
         data: { name: 'Club Dev', slug: 'club-dev' },
       });
@@ -209,7 +209,7 @@ describe('Module Club Members (e2e)', () => {
       expect(updated?.role).toBe('OWNER');
     });
 
-    it("devrait renvoyer 404 Not Found si la relation membre n'existe pas", async () => {
+    it('should return 404 Not Found if the membership relation does not exist', async () => {
       const club = await prisma.club.create({
         data: { name: 'Club Vide', slug: 'club-vide' },
       });
@@ -224,7 +224,7 @@ describe('Module Club Members (e2e)', () => {
       expect(response.status).toBe(404);
     });
 
-    it('devrait renvoyer 400 Bad Request si le rôle est invalide', async () => {
+    it('should return 400 Bad Request if the role is invalid', async () => {
       const club = await prisma.club.create({
         data: { name: 'Club Test', slug: 'club-test' },
       });
@@ -244,7 +244,7 @@ describe('Module Club Members (e2e)', () => {
   });
 
   describe('DELETE /clubs/:clubSlug/members/:userId', () => {
-    it('devrait retirer un membre du club', async () => {
+    it('should remove a member from the club', async () => {
       const club = await prisma.club.create({
         data: { name: 'Club Out', slug: 'club-out' },
       });
@@ -267,7 +267,7 @@ describe('Module Club Members (e2e)', () => {
       expect(membership).toBeNull();
     });
 
-    it("devrait renvoyer 404 Not Found si la relation membre n'existe pas", async () => {
+    it('should return 404 Not Found if the membership relation does not exist', async () => {
       const club = await prisma.club.create({
         data: { name: 'Club Vide', slug: 'club-vide' },
       });

@@ -32,7 +32,7 @@ interface AuthenticatedRequest extends Request {
   userSession?: BetterAuthSession;
 }
 
-@ApiTags('Critiques / Avis')
+@ApiTags('Reviews')
 @ApiBearerAuth()
 @Controller('clubs/:clubSlug/books/:bookId/reviews')
 @UseGuards(ClubRolesGuard)
@@ -47,8 +47,8 @@ export class ReviewsController {
 
   @Post()
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR, ClubRole.READER)
-  @ApiOperation({ summary: 'Crée ou met à jour un avis/une critique sur un livre' })
-  @ApiResponse({ status: 201, description: 'Critique créée ou mise à jour avec succès.' })
+  @ApiOperation({ summary: 'Create or update a review on a book' })
+  @ApiResponse({ status: 201, description: 'Review created or updated successfully.' })
   async create(
     @Param('clubSlug') clubSlug: string,
     @Param('bookId') bookId: string,
@@ -71,8 +71,8 @@ export class ReviewsController {
 
   @Get()
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR, ClubRole.READER)
-  @ApiOperation({ summary: 'Récupère tous les avis/les critiques d\'un livre' })
-  @ApiResponse({ status: 200, description: 'Liste des avis retournée.' })
+  @ApiOperation({ summary: 'Retrieve all reviews of a book' })
+  @ApiResponse({ status: 200, description: 'List of reviews returned.' })
   async findAll(
     @Param('clubSlug') clubSlug: string,
     @Param('bookId') bookId: string,

@@ -1,103 +1,103 @@
-# 📚 BookShelf — Plateforme de lecture collaborative API
+# 📚 BookShelf — Collaborative Reading Platform API
 
-BookShelf est une API NestJS robuste conçue pour gérer des **clubs de lecture collaboratifs**. Elle permet aux utilisateurs de créer des clubs, d'inviter des membres avec des rôles spécifiques, de partager des bibliothèques de livres, de suivre leur progression de lecture page par page, d'ajouter des avis et notes moyennes sur les livres, et de gérer le tout via une console d'administration.
-
----
-
-## 🚀 Stack Technique
-
-- **NestJS** : Framework Node.js progressif et modulaire.
-- **Prisma ORM** : ORM pour interagir proprement avec la base de données PostgreSQL.
-- **Better Auth** : Authentification globale et sécurisée.
-- **Docker** : Conteneurisation de PostgreSQL pour le développement et les tests.
-- **Swagger / OpenAPI** : Documentation interactive et typée de l'ensemble de l'API.
-- **Jest & Supertest** : Suite complète de tests unitaires et tests d'intégration E2E.
+BookShelf is a robust NestJS API designed to manage **collaborative reading clubs**. It allows users to create clubs, invite members with specific roles, share libraries of books, track their reading progression page by page, add reviews and average ratings to books, and manage everything via an administration console.
 
 ---
 
-## 📂 Modules Applicatifs de l'API
+## 🚀 Technical Stack
 
-L'application est structurée de manière modulaire :
+- **NestJS** : Progressive and modular Node.js framework.
+- **Prisma ORM** : ORM for clean interaction with the PostgreSQL database.
+- **Better Auth** : Global and secure authentication.
+- **Docker** : Containerization of PostgreSQL for development and testing.
+- **Swagger / OpenAPI** : Interactive and typed documentation for the entire API.
+- **Jest & Supertest** : Complete suite of unit tests and E2E integration tests.
 
-1. **`Authentification`** : Inscription, connexion, déconnexion et gestion des sessions gérées nativement par Better Auth.
+---
+
+## 📂 API Application Modules
+
+The application is structured in a modular way:
+
+1. **`Authentication`** : Registration, login, logout, and session management natively handled by Better Auth.
 2. **`Administration`** :
-   - Activation et désactivation de comptes utilisateurs.
-   - Importation en masse de livres au format CSV (transactionnelle et validée).
-   - Importation en masse de membres de clubs au format CSV.
-3. **`Clubs`** : CRUD complet des clubs avec filtrage de recherche et pagination, et gestion de la visibilité des clubs inactifs.
-4. **`Membres de Club`** : Gestion des rôles internes (`OWNER`, `EDITOR`, `READER`) et exclusion de membres.
-5. **`Livres`** : CRUD des livres d'un club, avec filtrage multi-critères, pagination et contrôle de visibilité selon les rôles.
-6. **`Pages de Livre`** : Gestion dynamique et ordonnée (gapless) des pages de livres avec shifting automatique (transactionnel) lors des écritures ou déplacements, et upload d'images.
-7. **`Progression de Lecture`** : Marque-page individuel par livre avec calcul de pourcentage, et tableau de bord global pour les propriétaires/éditeurs.
-8. **`Critiques / Avis`** : Notation des livres (1 à 5 étoiles) avec contrainte d'unicité (un seul avis par livre et par utilisateur) et mise à jour de la note moyenne globale du livre.
+   - Activation and deactivation of user accounts.
+   - Bulk import of books in CSV format (transactional and validated).
+   - Bulk import of club members in CSV format.
+3. **`Clubs`** : Complete CRUD of clubs with search filtering and pagination, and visibility management of inactive clubs.
+4. **`Club Members`** : Management of internal roles (`OWNER`, `EDITOR`, `READER`) and member exclusion.
+5. **`Books`** : CRUD of a club's books, with multi-criteria filtering, pagination, and visibility control according to roles.
+6. **`Book Pages`** : Dynamic and ordered (gapless) management of book pages with automatic shifting (transactional) during writes or moves, and image upload.
+7. **`Reading Progression`** : Individual bookmark per book with percentage calculation, and global dashboard for owners/editors.
+8. **`Reviews`** : Rating of books (1 to 5 stars) with uniqueness constraint (only one review per book per user) and update of the book's overall average rating.
 
 ---
 
 ## ⚙️ Configuration & Setup
 
-### 1. Variables d'Environnement
-Copiez le fichier d'exemple et configurez vos secrets :
+### 1. Environment Variables
+Copy the example file and configure your secrets:
 ```bash
 cp .env.example .env
 ```
-*(Le fichier `.env.example` contient déjà les configurations par défaut prêtes pour le développement en local via Docker).*
+*(The `.env.example` file already contains the default configurations ready for local development via Docker).*
 
-### 2. Lancement des bases de données PostgreSQL
-BookShelf utilise deux bases de données distinctes (une pour le développement et une dédiée aux tests E2E) conteneurisées dans Docker.
-Lancez-les en arrière-plan :
+### 2. Launching PostgreSQL databases
+BookShelf uses two distinct databases (one for development and one dedicated to E2E tests) containerized in Docker.
+Run them in the background:
 ```bash
 docker compose up -d db db-test
 ```
 
-### 3. Exécution des Migrations de Base de Données
-Appliquez le schéma de données Prisma et chargez les tables sur les deux instances PostgreSQL (dev et test) :
+### 3. Running Database Migrations
+Apply the Prisma data schema and load tables on both PostgreSQL instances (dev and test):
 ```bash
 npm run db:migrate:all
 ```
 
-### 4. Démarrage de l'API
-Lancez le serveur NestJS en mode développement (avec rechargement automatique) :
+### 4. Starting the API
+Start the NestJS server in development mode (with hot-reload):
 ```bash
 npm run start:dev
 ```
-L'application écoute par défaut sur le port `3000`.
+The application listens by default on port `3000`.
 
 ---
 
-## 📝 Documentation interactive de l'API (Swagger UI)
+## 📝 Interactive API Documentation (Swagger UI)
 
-Une interface Swagger interactive est accessible localement à l'adresse :
+An interactive Swagger interface is accessible locally at:
 👉 **`http://localhost:3000/api`**
 
-Vous y trouverez :
-- L'ensemble des 8 modules documentés avec leurs routes.
-- Les schémas de données requis pour les requêtes (DTOs validés).
-- Le support Bearer Token (`Authorize`) pour tester directement les routes authentifiées depuis votre navigateur.
+There you will find:
+- All 8 documented modules with their routes.
+- The data schemas required for requests (validated DTOs).
+- Bearer Token support (`Authorize`) to directly test authenticated routes from your browser.
 
 ---
 
-## 🔧 Scripts Disponibles
+## 🔧 Available Scripts
 
-| Commande | Action |
+| Command | Action |
 | :--- | :--- |
-| `npm install` | Installe les dépendances du projet. |
-| `npm run start:dev` | Démarre le serveur NestJS local en mode observation (`watch`). |
-| `npm run db:migrate:all` | Applique les migrations Prisma sur les bases de données de dev et de test. |
-| `npm run build` | Compile le projet TypeScript en JavaScript prêt pour la production. |
-| `npm run test` | Exécute les tests unitaires sur les services métier. |
-| `npm run test:e2e` | Exécute la suite complète de tests d'intégration E2E. |
-| `npm run test:cov` | Mesure et affiche la couverture globale du code par les tests. |
+| `npm install` | Installs project dependencies. |
+| `npm run start:dev` | Starts the local NestJS server in watch mode. |
+| `npm run db:migrate:all` | Applies Prisma migrations on the dev and test databases. |
+| `npm run build` | Compiles the TypeScript project into production-ready JavaScript. |
+| `npm run test` | Runs unit tests on business services. |
+| `npm run test:e2e` | Runs the full suite of E2E integration tests. |
+| `npm run test:cov` | Measures and displays global test coverage of the code. |
 
 ---
 
-## 🧪 Validation & Suite de Tests
+## 🧪 Validation & Test Suite
 
-Tous les composants de l'application sont validés par 110 tests d'intégration E2E et des tests unitaires :
+All components of the application are validated by 110 E2E integration tests and unit tests:
 ```bash
-# Lancer les tests d'intégration
+# Run integration tests
 npm run test:e2e
 
-# Lancer la couverture de code
+# Run code coverage
 npm run test:cov
 ```
-*(La couverture actuelle de code est supérieure à 90% sur l'ensemble de la codebase).*
+*(Current code coverage is above 90% across the entire codebase).*

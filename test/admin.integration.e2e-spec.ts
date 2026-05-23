@@ -29,7 +29,7 @@ jest.mock('../src/auth/auth', () => ({
   },
 }));
 
-describe('Module Administration (e2e)', () => {
+describe('Administration Module (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let adminUser: User;
@@ -118,21 +118,21 @@ describe('Module Administration (e2e)', () => {
 
   const apiRequest = () => request(app.getHttpServer() as App);
 
-  describe('Accès global Administrateur (AdminGuard)', () => {
-    it('devrait refuser l’accès aux non-authentifiés (401)', async () => {
+  describe('Global Admin Access (AdminGuard)', () => {
+    it('should deny access to unauthenticated users (401)', async () => {
       authenticateAs(null);
       const response = await apiRequest().get('/admin/users');
       expect(response.status).toBe(401);
     });
 
-    it('devrait refuser l’accès aux utilisateurs standard (403)', async () => {
+    it('should deny access to standard users (403)', async () => {
       authenticateAs(regularUser);
       const response = await apiRequest().get('/admin/users');
       expect(response.status).toBe(403);
       expect(response.body.message).toContain('Accès réservé');
     });
 
-    it('devrait autoriser l’accès aux administrateurs (200)', async () => {
+    it('should allow access to administrators (200)', async () => {
       authenticateAs(adminUser);
       const response = await apiRequest().get('/admin/users');
       expect(response.status).toBe(200);
@@ -141,11 +141,11 @@ describe('Module Administration (e2e)', () => {
     });
   });
 
-  describe('Gestion des utilisateurs (désactivation / réactivation)', () => {
-    it('devrait permettre de désactiver puis réactiver un utilisateur', async () => {
+  describe('User management (deactivation / reactivation)', () => {
+    it('should allow deactivating and then reactivating a user', async () => {
       authenticateAs(adminUser);
 
-      // Désactiver
+      // Deactivate
       const resDeactivate = await apiRequest().post(
         `/admin/users/${regularUser.id}/deactivate`,
       );
@@ -157,7 +157,7 @@ describe('Module Administration (e2e)', () => {
       });
       expect(dbUserInactive?.isActive).toBe(false);
 
-      // Réactiver
+      // Reactivate
       const resReactivate = await apiRequest().post(
         `/admin/users/${regularUser.id}/reactivate`,
       );
@@ -170,12 +170,12 @@ describe('Module Administration (e2e)', () => {
       expect(dbUserActive?.isActive).toBe(true);
     });
 
-    it('devrait interdire toute action sur le club à un utilisateur désactivé (403)', async () => {
-      // 1. Désactivation par l'admin
+    it('should forbid any action on the club for a deactivated user (403)', async () => {
+      // 1. Deactivation by the admin
       authenticateAs(adminUser);
       await apiRequest().post(`/admin/users/${regularUser.id}/deactivate`);
 
-      // 2. L'utilisateur désactivé tente d'accéder aux livres du club
+      // 2. The deactivated user attempts to access the club's books
       authenticateAs(regularUser);
       const response = await apiRequest().get(`/clubs/${club.slug}/books`);
 
@@ -184,8 +184,8 @@ describe('Module Administration (e2e)', () => {
     });
   });
 
-  describe('Import CSV de livres', () => {
-    it('devrait importer des livres valides avec succès', async () => {
+  describe('CSV import of books', () => {
+    it('should successfully import valid books', async () => {
       authenticateAs(adminUser);
 
       const csv = `title,author,genre,pages
@@ -212,10 +212,10 @@ Livre B,Auteur B,Genre B,250`;
       expect(dbBooks[1].pages).toBe(250);
     });
 
-    it('devrait échouer de manière transactionnelle si une ligne comporte une erreur', async () => {
+    it('should fail transactionally if a row contains an error', async () => {
       authenticateAs(adminUser);
 
-      // Livre B comporte -100 pages (invalide)
+      // Book B has -100 pages (invalid)
       const csv = `title,author,genre,pages
 Livre A,Auteur A,Genre A,120
 Livre B,Auteur B,Genre B,-100`;
@@ -230,14 +230,14 @@ Livre B,Auteur B,Genre B,-100`;
       expect(response.body.errors[0].row).toBe(3);
       expect(response.body.errors[0].error).toContain('entier positif');
 
-      // Transactionnel : aucun livre ne doit être inséré (même pas Livre A)
+      // Transactional: no book should be inserted (not even Book A)
       const dbBooks = await prisma.book.findMany({
         where: { clubId: club.id },
       });
       expect(dbBooks).toHaveLength(0);
     });
 
-    it('devrait échouer avec 404 Not Found si le club n’existe pas', async () => {
+    it('should fail with 404 Not Found if the club does not exist', async () => {
       authenticateAs(adminUser);
       const csv = `title,author,genre,pages\nLivre A,Auteur A,Genre A,120`;
 
@@ -249,7 +249,7 @@ Livre B,Auteur B,Genre B,-100`;
     });
   });
 
-  describe('Import CSV de membres', () => {
+  describe('CSV import of members', () => {
     let secondUser: User;
 
     beforeEach(async () => {
@@ -262,10 +262,10 @@ Livre B,Auteur B,Genre B,-100`;
       });
     });
 
-    it('devrait importer / modifier des membres avec succès', async () => {
+    it('should successfully import / modify members', async () => {
       authenticateAs(adminUser);
 
-      // regularUser est déjà READER. On le passe EDITOR, et on ajoute secondUser en READER.
+      // regularUser is already READER. We change them to EDITOR, and add secondUser as READER.
       const csv = `email,role
 user@example.com,EDITOR
 second@example.com,READER`;
@@ -289,7 +289,7 @@ second@example.com,READER`;
       expect(member2?.role).toBe('READER');
     });
 
-    it('devrait échouer de manière transactionnelle si un utilisateur n’existe pas', async () => {
+    it('should fail transactionally if a user does not exist', async () => {
       authenticateAs(adminUser);
 
       const csv = `email,role
@@ -306,14 +306,14 @@ inconnu@example.com,READER`;
       expect(response.body.errors[0].row).toBe(3);
       expect(response.body.errors[0].error).toContain("n'existe pas");
 
-      // Pas de modification effectuée (regularUser reste READER)
+      // No modification performed (regularUser remains READER)
       const member1 = await prisma.clubMember.findUnique({
         where: { userId_clubId: { userId: regularUser.id, clubId: club.id } },
       });
       expect(member1?.role).toBe('READER');
     });
 
-    it('devrait échouer de manière transactionnelle si un rôle est invalide', async () => {
+    it('should fail transactionally if a role is invalid', async () => {
       authenticateAs(adminUser);
 
       const csv = `email,role

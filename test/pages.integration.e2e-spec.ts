@@ -30,7 +30,7 @@ jest.mock('../src/auth/auth', () => ({
   },
 }));
 
-describe('Module Pages (e2e)', () => {
+describe('Pages Module (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let club: Club;
@@ -128,7 +128,7 @@ describe('Module Pages (e2e)', () => {
   });
 
   describe('POST /clubs/:clubSlug/books/:bookId/pages', () => {
-    it('devrait permettre à un EDITOR ou OWNER de créer une page et décaler les suivantes', async () => {
+    it('should allow an EDITOR or OWNER to create a page and shift subsequent ones', async () => {
       mockSession = {
         user: { id: editorUser.id, email: editorUser.email, role: 'USER' },
       };
@@ -196,7 +196,7 @@ describe('Module Pages (e2e)', () => {
       expect(updatedBook?.pages).toBe(3);
     });
 
-    it('devrait interdire la création de page à un READER', async () => {
+    it('should forbid page creation for a READER', async () => {
       mockSession = {
         user: { id: readerUser.id, email: readerUser.email, role: 'USER' },
       };
@@ -211,7 +211,7 @@ describe('Module Pages (e2e)', () => {
         .expect(403);
     });
 
-    it('devrait renvoyer 400 Bad Request si l index est hors limite', async () => {
+    it('should return 400 Bad Request if the index is out of bounds', async () => {
       mockSession = {
         user: { id: ownerUser.id, email: ownerUser.email, role: 'USER' },
       };
@@ -229,7 +229,7 @@ describe('Module Pages (e2e)', () => {
   });
 
   describe('POST /clubs/:clubSlug/books/:bookId/pages/upload', () => {
-    it('devrait permettre de charger une image et renvoyer son URL', async () => {
+    it('should allow uploading an image and return its URL', async () => {
       mockSession = {
         user: { id: editorUser.id, email: editorUser.email, role: 'USER' },
       };
@@ -245,7 +245,7 @@ describe('Module Pages (e2e)', () => {
   });
 
   describe('GET /clubs/:clubSlug/books/:bookId/pages', () => {
-    it('devrait retourner les pages avec pagination', async () => {
+    it('should return pages with pagination', async () => {
       mockSession = {
         user: { id: readerUser.id, email: readerUser.email, role: 'USER' },
       };
@@ -279,7 +279,7 @@ describe('Module Pages (e2e)', () => {
   });
 
   describe('GET /clubs/:clubSlug/books/:bookId/pages/:index', () => {
-    it('devrait retourner une page spécifique ou 404 si absente', async () => {
+    it('should return a specific page or 404 if absent', async () => {
       mockSession = {
         user: { id: readerUser.id, email: readerUser.email, role: 'USER' },
       };
@@ -299,7 +299,7 @@ describe('Module Pages (e2e)', () => {
         .expect(404);
     });
 
-    it('devrait masquer les pages d un livre désactivé aux membres classiques (404)', async () => {
+    it('should hide pages of a deactivated book from standard members (404)', async () => {
       // Deactivate book
       await prisma.book.update({
         where: { id: book.id },
@@ -329,7 +329,7 @@ describe('Module Pages (e2e)', () => {
   });
 
   describe('PATCH /clubs/:clubSlug/books/:bookId/pages/:index', () => {
-    it('devrait permettre de modifier les données et l index (avec shifting)', async () => {
+    it('should allow modifying data and index (with shifting)', async () => {
       mockSession = {
         user: { id: ownerUser.id, email: ownerUser.email, role: 'USER' },
       };
@@ -374,7 +374,7 @@ describe('Module Pages (e2e)', () => {
   });
 
   describe('DELETE /clubs/:clubSlug/books/:bookId/pages/:index', () => {
-    it('devrait supprimer une page et décaler les suivantes vers le bas', async () => {
+    it('should delete a page and shift subsequent pages down', async () => {
       mockSession = {
         user: { id: ownerUser.id, email: ownerUser.email, role: 'USER' },
       };
@@ -417,7 +417,7 @@ describe('Module Pages (e2e)', () => {
   });
 
   describe('Integration Progression', () => {
-    it('devrait inclure currentPageDetails dans la reponse de progression', async () => {
+    it('should include currentPageDetails in the progression response', async () => {
       mockSession = {
         user: { id: readerUser.id, email: readerUser.email, role: 'USER' },
       };

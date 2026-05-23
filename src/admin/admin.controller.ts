@@ -19,29 +19,29 @@ export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
   @Get('users')
-  @ApiOperation({ summary: 'Liste tous les utilisateurs de la plateforme' })
-  @ApiResponse({ status: 200, description: 'Liste des utilisateurs retournée avec succès.' })
+  @ApiOperation({ summary: 'List all users on the platform' })
+  @ApiResponse({ status: 200, description: 'List of users returned successfully.' })
   async listUsers() {
     return this.adminService.listUsers();
   }
 
   @Post('users/:id/deactivate')
-  @ApiOperation({ summary: 'Désactive un utilisateur' })
-  @ApiResponse({ status: 200, description: 'L\'utilisateur a été désactivé avec succès.' })
+  @ApiOperation({ summary: 'Deactivate a user' })
+  @ApiResponse({ status: 200, description: 'User deactivated successfully.' })
   async deactivateUser(@Param('id') id: string) {
     return this.adminService.deactivateUser(id);
   }
 
   @Post('users/:id/reactivate')
-  @ApiOperation({ summary: 'Réactive un utilisateur' })
-  @ApiResponse({ status: 200, description: 'L\'utilisateur a été réactivé avec succès.' })
+  @ApiOperation({ summary: 'Reactivate a user' })
+  @ApiResponse({ status: 200, description: 'User reactivated successfully.' })
   async reactivateUser(@Param('id') id: string) {
     return this.adminService.reactivateUser(id);
   }
 
   @Post('clubs/:clubSlug/books/import')
-  @ApiOperation({ summary: 'Importe des livres dans un club via un contenu CSV' })
-  @ApiResponse({ status: 201, description: 'Livres importés avec succès.' })
+  @ApiOperation({ summary: 'Import books into a club via CSV' })
+  @ApiResponse({ status: 201, description: 'Books imported successfully.' })
   async importBooks(
     @Param('clubSlug') clubSlug: string,
     @Body() importCsvDto: ImportCsvDto,
@@ -50,8 +50,8 @@ export class AdminController {
   }
 
   @Post('clubs/:clubSlug/members/import')
-  @ApiOperation({ summary: 'Importe des membres dans un club via un contenu CSV' })
-  @ApiResponse({ status: 201, description: 'Membres importés avec succès.' })
+  @ApiOperation({ summary: 'Import members into a club via CSV' })
+  @ApiResponse({ status: 201, description: 'Members imported successfully.' })
   async importMembers(
     @Param('clubSlug') clubSlug: string,
     @Body() importCsvDto: ImportCsvDto,

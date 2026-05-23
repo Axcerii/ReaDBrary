@@ -44,32 +44,32 @@ export class ClubsController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Crée un nouveau club de lecture' })
-  @ApiResponse({ status: 201, description: 'Le club a été créé avec succès.' })
+  @ApiOperation({ summary: 'Create a new book club' })
+  @ApiResponse({ status: 201, description: 'Club created successfully.' })
   async create(@Body() createClubDto: CreateClubDto) {
     return this.clubsService.create(createClubDto);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Liste tous les clubs de lecture (publics ou selon les droits du membre) avec filtres et pagination' })
-  @ApiResponse({ status: 200, description: 'Liste des clubs retournée.' })
+  @ApiOperation({ summary: 'List all book clubs (public or based on member permissions) with filters and pagination' })
+  @ApiResponse({ status: 200, description: 'List of clubs returned successfully.' })
   async findAll(@Query() query: ClubQueryDto, @Req() req: Request) {
     const sessionUser = await this.getSessionUser(req);
     return this.clubsService.findAll(query, sessionUser);
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Récupère les détails d\'un club' })
-  @ApiResponse({ status: 200, description: 'Détails du club retournés.' })
-  @ApiResponse({ status: 404, description: 'Club non trouvé ou inaccessible.' })
+  @ApiOperation({ summary: 'Get details of a club' })
+  @ApiResponse({ status: 200, description: 'Club details returned successfully.' })
+  @ApiResponse({ status: 404, description: 'Club not found or inaccessible.' })
   async findOne(@Param('id') id: string, @Req() req: Request) {
     const sessionUser = await this.getSessionUser(req);
     return this.clubsService.findOne(id, sessionUser);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Met à jour les informations d\'un club (ou son statut d\'activité)' })
-  @ApiResponse({ status: 200, description: 'Club mis à jour avec succès.' })
+  @ApiOperation({ summary: 'Update club details (or its activity status)' })
+  @ApiResponse({ status: 200, description: 'Club updated successfully.' })
   async update(
     @Param('id') id: string,
     @Body() updateClubDto: UpdateClubDto,
@@ -80,8 +80,8 @@ export class ClubsController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Supprime un club' })
-  @ApiResponse({ status: 200, description: 'Club supprimé avec succès.' })
+  @ApiOperation({ summary: 'Delete a club' })
+  @ApiResponse({ status: 200, description: 'Club deleted successfully.' })
   remove(@Param('id') id: string) {
     return this.clubsService.remove(id);
   }

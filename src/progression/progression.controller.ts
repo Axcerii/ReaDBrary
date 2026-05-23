@@ -32,7 +32,7 @@ interface AuthenticatedRequest extends Request {
   userSession?: BetterAuthSession;
 }
 
-@ApiTags('Progression de Lecture')
+@ApiTags('Reading Progression')
 @ApiBearerAuth()
 @Controller('clubs/:clubSlug/books/:bookId')
 @UseGuards(ClubRolesGuard)
@@ -47,8 +47,8 @@ export class ProgressionController {
 
   @Patch('progression')
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR, ClubRole.READER)
-  @ApiOperation({ summary: 'Met à jour sa progression de lecture sur un livre' })
-  @ApiResponse({ status: 200, description: 'Progression mise à jour avec succès.' })
+  @ApiOperation({ summary: 'Update reading progression on a book' })
+  @ApiResponse({ status: 200, description: 'Progression updated successfully.' })
   async update(
     @Param('clubSlug') clubSlug: string,
     @Param('bookId') bookId: string,
@@ -71,8 +71,8 @@ export class ProgressionController {
 
   @Get('progression')
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR, ClubRole.READER)
-  @ApiOperation({ summary: 'Récupère sa progression de lecture et les détails de la page en cours' })
-  @ApiResponse({ status: 200, description: 'Progression de lecture retournée.' })
+  @ApiOperation({ summary: 'Get reading progression and current page details' })
+  @ApiResponse({ status: 200, description: 'Reading progression returned successfully.' })
   async get(
     @Param('clubSlug') clubSlug: string,
     @Param('bookId') bookId: string,
@@ -88,8 +88,8 @@ export class ProgressionController {
 
   @Get('progressions')
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR)
-  @ApiOperation({ summary: 'Récupère la progression de lecture de tous les membres du club pour un livre' })
-  @ApiResponse({ status: 200, description: 'Progressions globales retournées.' })
+  @ApiOperation({ summary: 'Get reading progression of all club members for a book' })
+  @ApiResponse({ status: 200, description: 'Global progressions returned successfully.' })
   async getGlobal(
     @Param('clubSlug') clubSlug: string,
     @Param('bookId') bookId: string,
