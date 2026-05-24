@@ -1,6 +1,6 @@
 import { Module, ValidationPipe, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_PIPE } from '@nestjs/core';
+import { APP_PIPE, APP_FILTER } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AuthController } from './auth/auth.controller';
 import { AppService } from './app.service';
@@ -15,6 +15,7 @@ import { ProgressionModule } from './progression/progression.module';
 import { AdminModule } from './admin/admin.module';
 import { PagesModule } from './pages/pages.module';
 import { AuthLoggerMiddleware } from './auth/middleware/auth-logger.middleware';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 
 @Module({
   imports: [
@@ -35,6 +36,10 @@ import { AuthLoggerMiddleware } from './auth/middleware/auth-logger.middleware';
     {
       provide: APP_PIPE,
       useClass: ValidationPipe,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: GlobalExceptionFilter,
     },
   ],
 })
