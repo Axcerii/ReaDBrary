@@ -361,4 +361,28 @@ export class AdminService {
 
     return { success: true, count: membersToUpsert.length };
   }
+
+  /**
+   * Supprime un avis (critique) de livre.
+   * Cette action est réservée aux administrateurs pour modération.
+   * 
+   * @param id L'identifiant de l'avis à supprimer
+   * @throws NotFoundException Si l'avis n'existe pas
+   * @returns Un objet confirmant le succès de la suppression
+   */
+  async deleteReview(id: string) {
+    const review = await this.prisma.review.findUnique({
+      where: { id },
+    });
+
+    if (!review) {
+      throw new NotFoundException(`Avis avec l'ID "${id}" non trouvé.`);
+    }
+
+    await this.prisma.review.delete({
+      where: { id },
+    });
+
+    return { success: true, message: 'Avis supprimé avec succès.' };
+  }
 }

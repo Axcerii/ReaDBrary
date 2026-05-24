@@ -332,4 +332,87 @@ second@example.com,INVALIDE`;
       expect(member2).toBeNull();
     });
   });
+
+  describe('Review Moderation (deleting reviews)', () => {
+    let book: any;
+    let review: any;
+
+    beforeEach(async () => {
+      // Create a book in the club
+      book = await prisma.book.create({
+        data: {
+          title: 'Book for reviews',
+          author: 'Author A',
+          genre: 'Genre A',
+          pages: 150,
+          clubId: club.id,
+        },
+      });
+
+      // Create a review for the book by regularUser
+      review = await prisma.review.create({
+        data: {
+          rating: 4,
+          comment: 'Very interesting book.',
+          userId: regularUser.id,
+          bookId: book.id,
+        },
+      });
+    });
+
+    it('should allow an administrator to delete a review', async () => {
+      authenticateAs(adminUser);
+
+      const response = await apiRequest()
+        .delete(`/admin/reviews/${review.id}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+
+      const dbReview = await prisma.review.findUnique({
+        where: { id: review.id },
+      });
+      expect(dbReview).toBeNull();
+    });
+
+    it('should deny access to unauthenticated users (401)', async () => {
+      authenticateAs(null);
+
+      const response = await apiRequest()
+        .delete(`/admin/reviews/${review.id}`);
+
+      expect(response.status).toBe(401);
+
+      // Verify review still exists
+      const dbReview = await prisma.review.findUnique({
+        where: { id: review.id },
+      });
+      expect(dbReview).not.toBeNull();
+    });
+
+    it('should deny access to standard users (403)', async () => {
+      authenticateAs(regularUser);
+
+      const response = await apiRequest()
+        .delete(`/admin/reviews/${review.id}`);
+
+      expect(response.status).toBe(403);
+
+      // Verify review still exists
+      const dbReview = await prisma.review.findUnique({
+        where: { id: review.id },
+      });
+      expect(dbReview).not.toBeNull();
+    });
+
+    it('should return 404 if the review does not exist', async () => {
+      authenticateAs(adminUser);
+
+      const response = await apiRequest()
+        .delete('/admin/reviews/00000000-0000-0000-0000-000000000000');
+
+      expect(response.status).toBe(404);
+    });
+  });
 });
+

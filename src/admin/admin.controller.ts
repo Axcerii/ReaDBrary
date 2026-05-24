@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Delete,
   Body,
   Param,
   UseGuards,
@@ -57,5 +58,12 @@ export class AdminController {
     @Body() importCsvDto: ImportCsvDto,
   ) {
     return this.adminService.importMembers(clubSlug, importCsvDto.csv);
+  }
+
+  @Delete('reviews/:id')
+  @ApiOperation({ summary: 'Delete a book review (moderation)' })
+  @ApiResponse({ status: 200, description: 'Review deleted successfully.' })
+  async deleteReview(@Param('id') id: string) {
+    return this.adminService.deleteReview(id);
   }
 }
