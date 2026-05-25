@@ -1,4 +1,11 @@
-import { Controller, Post, Get, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AllowAnonymous } from '@thallesp/nestjs-better-auth';
 import { SignUpEmailDto } from './dto/sign-up.dto';
@@ -67,7 +74,8 @@ export class AuthController {
   @Get('get-session')
   @ApiOperation({
     summary: 'Get active session',
-    description: 'Returns information about the currently active session and user.',
+    description:
+      'Returns information about the currently active session and user.',
   })
   @ApiResponse({
     status: 200,

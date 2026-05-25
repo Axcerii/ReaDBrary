@@ -15,7 +15,12 @@ import { UpdateClubDto } from './dto/update-club.dto';
 import { ClubQueryDto } from './dto/club-query.dto';
 import { Request } from 'express';
 import { auth } from '../auth/auth';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 
 interface BetterAuthSession {
   user: {
@@ -37,7 +42,9 @@ export class ClubsController {
       const session = (await auth.api.getSession({
         headers: req.headers as Record<string, string>,
       })) as BetterAuthSession | null;
-      return session?.user ? { id: session.user.id, role: session.user.role } : null;
+      return session?.user
+        ? { id: session.user.id, role: session.user.role }
+        : null;
     } catch {
       return null;
     }
@@ -51,8 +58,14 @@ export class ClubsController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'List all book clubs (public or based on member permissions) with filters and pagination' })
-  @ApiResponse({ status: 200, description: 'List of clubs returned successfully.' })
+  @ApiOperation({
+    summary:
+      'List all book clubs (public or based on member permissions) with filters and pagination',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of clubs returned successfully.',
+  })
   async findAll(@Query() query: ClubQueryDto, @Req() req: Request) {
     const sessionUser = await this.getSessionUser(req);
     return this.clubsService.findAll(query, sessionUser);
@@ -60,7 +73,10 @@ export class ClubsController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get details of a club' })
-  @ApiResponse({ status: 200, description: 'Club details returned successfully.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Club details returned successfully.',
+  })
   @ApiResponse({ status: 404, description: 'Club not found or inaccessible.' })
   async findOne(@Param('id') id: string, @Req() req: Request) {
     const sessionUser = await this.getSessionUser(req);

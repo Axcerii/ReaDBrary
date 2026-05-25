@@ -10,7 +10,12 @@ import {
 import { ClubMembersService } from './club-members.service';
 import { AddMemberDto } from './dto/add-member.dto';
 import { UpdateMemberRoleDto } from './dto/update-member-role.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 
 @ApiTags('Club Members')
 @ApiBearerAuth()
@@ -30,7 +35,10 @@ export class ClubMembersController {
 
   @Patch(':userId')
   @ApiOperation({ summary: 'Update a member role within the club' })
-  @ApiResponse({ status: 200, description: 'Member role updated successfully.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Member role updated successfully.',
+  })
   async updateMemberRole(
     @Param('clubSlug') clubSlug: string,
     @Param('userId') userId: string,
@@ -55,7 +63,10 @@ export class ClubMembersController {
 
   @Get()
   @ApiOperation({ summary: 'List all members of a club' })
-  @ApiResponse({ status: 200, description: 'List of members returned successfully.' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of members returned successfully.',
+  })
   async findMembers(@Param('clubSlug') clubSlug: string) {
     return this.clubMembersService.findMembers(clubSlug);
   }

@@ -6,14 +6,50 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateProgressionDto } from './dto/update-progression.dto';
 import { Progression } from '../../generated/prisma/client';
+import { splitChapterIntoPages } from '../common/utils/markdown.utils';
 
 @Injectable()
 export class ProgressionService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
+   * Résout les détails d'une page virtuelle à un index global donné.
+   */
+  private async resolveVirtualPageDetails(bookId: string, pageIndex: number) {
+    if (pageIndex <= 0) {
+      return null;
+    }
+
+    const chapters = await this.prisma.chapter.findMany({
+      where: { bookId },
+      orderBy: { index: 'asc' },
+    });
+
+    let cumulativePages = 0;
+    for (const chapter of chapters) {
+      const virtualPages = splitChapterIntoPages(chapter.content);
+      const chapterPagesCount = virtualPages.length;
+
+      if (pageIndex <= cumulativePages + chapterPagesCount) {
+        const pageOffset = pageIndex - cumulativePages - 1;
+        return {
+          id: `${chapter.id}-page-${pageOffset + 1}`,
+          index: pageIndex,
+          title: chapter.title,
+          text: virtualPages[pageOffset] || '',
+          image: null,
+          bookId,
+        };
+      }
+      cumulativePages += chapterPagesCount;
+    }
+
+    return null;
+  }
+
+  /**
    * Récupère l'identifiant d'un club de lecture à partir de son slug unique.
-   * 
+   *
    * @param slug Le slug unique du club
    * @throws NotFoundException Si le club n'existe pas
    * @returns L'identifiant (ID) du club
@@ -33,7 +69,7 @@ export class ProgressionService {
   /**
    * Valide et récupère un livre au sein d'un club.
    * Gère la restriction de visibilité si le livre est inactif.
-   * 
+   *
    * @param clubId L'identifiant du club
    * @param bookId L'identifiant du livre
    * @param userStatus Le statut d'administration globale ou de propriétaire du club de l'utilisateur
@@ -64,7 +100,7 @@ export class ProgressionService {
   /**
    * Met à jour (ou crée) le marque-page de progression d'un utilisateur sur un livre.
    * Calcule le pourcentage de progression et fournit le contenu textuel et image de la page courante.
-   * 
+   *
    * @param clubSlug Le slug du club de lecture
    * @param bookId L'identifiant du livre
    * @param userId L'identifiant de l'utilisateur
@@ -111,14 +147,10 @@ export class ProgressionService {
         ? Math.round((progression.currentPage / book.pages) * 100)
         : 0;
 
-    const pageDetails = await this.prisma.page.findUnique({
-      where: {
-        bookId_index: {
-          bookId,
-          index: progression.currentPage,
-        },
-      },
-    });
+    const pageDetails = await this.resolveVirtualPageDetails(
+      bookId,
+      progression.currentPage,
+    );
 
     return {
       ...progression,
@@ -130,7 +162,7 @@ export class ProgressionService {
   /**
    * Récupère la progression d'un membre sur un livre de club.
    * Renvoie également les métadonnées de la page en cours.
-   * 
+   *
    * @param clubSlug Le slug du club
    * @param bookId L'identifiant du livre
    * @param userId L'identifiant du membre concerné
@@ -159,16 +191,10 @@ export class ProgressionService {
     const progressPercentage =
       book.pages > 0 ? Math.round((currentPage / book.pages) * 100) : 0;
 
-    const pageDetails = currentPage > 0
-      ? await this.prisma.page.findUnique({
-          where: {
-            bookId_index: {
-              bookId,
-              index: currentPage,
-            },
-          },
-        })
-      : null;
+    const pageDetails =
+      currentPage > 0
+        ? await this.resolveVirtualPageDetails(bookId, currentPage)
+        : null;
 
     if (!progression) {
       return {
@@ -193,7 +219,7 @@ export class ProgressionService {
   /**
    * Récupère la progression de lecture de TOUS les membres d'un club de lecture pour un livre donné.
    * Cette méthode est réservée aux propriétaires de clubs et aux éditeurs.
-   * 
+   *
    * @param clubSlug Le slug du club
    * @param bookId L'identifiant du livre
    * @param userStatus Le statut d'accès de l'utilisateur demandeur

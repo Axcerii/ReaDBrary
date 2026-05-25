@@ -13,7 +13,7 @@ export class ClubMembersService {
 
   /**
    * Récupère l'identifiant d'un club de lecture à partir de son slug unique.
-   * 
+   *
    * @param slug Le slug unique du club
    * @throws NotFoundException Si le club n'existe pas
    * @returns L'identifiant (ID) du club
@@ -33,7 +33,7 @@ export class ClubMembersService {
   /**
    * Ajoute un utilisateur existant en tant que membre dans un club de lecture.
    * Rôle par défaut : READER.
-   * 
+   *
    * @param clubSlug Le slug du club
    * @param addMemberDto Les informations sur le membre à ajouter (userId, role)
    * @throws NotFoundException Si l'utilisateur n'existe pas
@@ -85,7 +85,7 @@ export class ClubMembersService {
 
   /**
    * Modifie le rôle interne d'un membre d'un club de lecture (ex: transformer un READER en EDITOR).
-   * 
+   *
    * @param clubSlug Le slug du club de lecture
    * @param userId L'identifiant de l'utilisateur à modifier
    * @param updateMemberRoleDto Le nouveau rôle à attribuer
@@ -128,7 +128,7 @@ export class ClubMembersService {
 
   /**
    * Retire un membre (exclusion) d'un club de lecture.
-   * 
+   *
    * @param clubSlug Le slug du club
    * @param userId L'identifiant du membre à retirer
    * @throws NotFoundException Si l'utilisateur n'est pas membre de ce club
@@ -155,7 +155,7 @@ export class ClubMembersService {
 
   /**
    * Récupère la liste de tous les membres faisant partie d'un club de lecture.
-   * 
+   *
    * @param clubSlug Le slug du club
    * @returns Un tableau contenant les membres du club et leurs profils utilisateur
    */

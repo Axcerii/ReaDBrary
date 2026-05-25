@@ -1,9 +1,9 @@
 import { IsString, IsNotEmpty, IsInt, Min, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class UpdatePageDto {
-  @IsInt({ message: "L'index de page doit être un entier" })
-  @Min(1, { message: "L'index de page doit être supérieur à 0" })
+export class UpdateChapterDto {
+  @IsInt({ message: "L'index de chapitre doit être un entier" })
+  @Min(1, { message: "L'index de chapitre doit être supérieur à 0" })
   @Type(() => Number)
   @IsOptional()
   index?: number;
@@ -14,11 +14,7 @@ export class UpdatePageDto {
   title?: string;
 
   @IsString()
-  @IsNotEmpty({ message: 'Le texte est obligatoire' })
+  @IsNotEmpty({ message: 'Le contenu est obligatoire' })
   @IsOptional()
-  text?: string;
-
-  @IsString()
-  @IsOptional()
-  image?: string;
+  content?: string;
 }

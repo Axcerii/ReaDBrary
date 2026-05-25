@@ -13,7 +13,7 @@ export class AdminService {
   /**
    * Analyse (parse) une chaîne CSV brute en respectant la spécification RFC 4180.
    * Gère les guillemets imbriqués, les retours à la ligne et les champs délimités par des virgules.
-   * 
+   *
    * @param csvText La chaîne de caractères CSV brute
    * @returns Un tableau de lignes, chaque ligne étant un tableau de chaînes représentant les colonnes
    */
@@ -77,7 +77,7 @@ export class AdminService {
   /**
    * Liste tous les utilisateurs de l'application.
    * Classés par date de création décroissante.
-   * 
+   *
    * @returns Un tableau d'utilisateurs avec leurs profils et statuts d'activité
    */
   async listUsers() {
@@ -98,7 +98,7 @@ export class AdminService {
   /**
    * Désactive un utilisateur de la plateforme. Un utilisateur désactivé ne peut plus se connecter
    * et perd temporairement l'accès aux ressources privées des clubs de lecture.
-   * 
+   *
    * @param id L'identifiant de l'utilisateur à désactiver
    * @throws NotFoundException Si l'utilisateur n'existe pas
    * @returns L'identifiant, l'email et le statut mis à jour de l'utilisateur
@@ -117,7 +117,7 @@ export class AdminService {
 
   /**
    * Réactive le compte d'un utilisateur désactivé.
-   * 
+   *
    * @param id L'identifiant de l'utilisateur à réactiver
    * @throws NotFoundException Si l'utilisateur n'existe pas
    * @returns L'identifiant, l'email et le statut mis à jour de l'utilisateur
@@ -137,7 +137,7 @@ export class AdminService {
   /**
    * Importe des livres en masse dans un club à partir d'un fichier CSV.
    * Valide chaque ligne et applique l'import de façon transactionnelle (tous les livres ou aucun).
-   * 
+   *
    * @param clubSlug Le slug du club de lecture destinataire
    * @param csv Le contenu textuel brut du fichier CSV
    * @throws NotFoundException Si le club n'existe pas
@@ -247,7 +247,7 @@ export class AdminService {
    * Importe et associe en masse des utilisateurs à un club à partir d'un fichier CSV.
    * Valide les rôles et l'existence des utilisateurs, puis met à jour (ou crée) les adhésions
    * de façon transactionnelle.
-   * 
+   *
    * @param clubSlug Le slug du club de lecture
    * @param csv Le contenu textuel brut du fichier CSV
    * @throws NotFoundException Si le club n'existe pas
@@ -365,7 +365,7 @@ export class AdminService {
   /**
    * Supprime un avis (critique) de livre.
    * Cette action est réservée aux administrateurs pour modération.
-   * 
+   *
    * @param id L'identifiant de l'avis à supprimer
    * @throws NotFoundException Si l'avis n'existe pas
    * @returns Un objet confirmant le succès de la suppression

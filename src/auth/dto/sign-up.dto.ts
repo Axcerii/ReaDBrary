@@ -1,8 +1,14 @@
-import { IsString, IsNotEmpty, IsEmail, IsOptional, MinLength } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsEmail,
+  IsOptional,
+  MinLength,
+} from 'class-validator';
 
 export class SignUpEmailDto {
-  @IsEmail({}, { message: 'L\'adresse email doit être valide' })
-  @IsNotEmpty({ message: 'L\'email est obligatoire' })
+  @IsEmail({}, { message: "L'adresse email doit être valide" })
+  @IsNotEmpty({ message: "L'email est obligatoire" })
   email: string;
 
   @IsString()
