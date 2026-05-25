@@ -10,7 +10,13 @@ import { ClubRole } from '../../generated/prisma/client';
 export class AdminService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // Parse CSV compliant with RFC 4180
+  /**
+   * Analyse (parse) une chaîne CSV brute en respectant la spécification RFC 4180.
+   * Gère les guillemets imbriqués, les retours à la ligne et les champs délimités par des virgules.
+   * 
+   * @param csvText La chaîne de caractères CSV brute
+   * @returns Un tableau de lignes, chaque ligne étant un tableau de chaînes représentant les colonnes
+   */
   private parseCsv(csvText: string): string[][] {
     const lines: string[][] = [];
     let currentRow: string[] = [];
@@ -68,7 +74,12 @@ export class AdminService {
     return lines;
   }
 
-  // 1. User Management
+  /**
+   * Liste tous les utilisateurs de l'application.
+   * Classés par date de création décroissante.
+   * 
+   * @returns Un tableau d'utilisateurs avec leurs profils et statuts d'activité
+   */
   async listUsers() {
     return this.prisma.user.findMany({
       orderBy: { createdAt: 'desc' },
@@ -84,6 +95,14 @@ export class AdminService {
     });
   }
 
+  /**
+   * Désactive un utilisateur de la plateforme. Un utilisateur désactivé ne peut plus se connecter
+   * et perd temporairement l'accès aux ressources privées des clubs de lecture.
+   * 
+   * @param id L'identifiant de l'utilisateur à désactiver
+   * @throws NotFoundException Si l'utilisateur n'existe pas
+   * @returns L'identifiant, l'email et le statut mis à jour de l'utilisateur
+   */
   async deactivateUser(id: string) {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) {
@@ -96,6 +115,13 @@ export class AdminService {
     });
   }
 
+  /**
+   * Réactive le compte d'un utilisateur désactivé.
+   * 
+   * @param id L'identifiant de l'utilisateur à réactiver
+   * @throws NotFoundException Si l'utilisateur n'existe pas
+   * @returns L'identifiant, l'email et le statut mis à jour de l'utilisateur
+   */
   async reactivateUser(id: string) {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) {
@@ -108,7 +134,16 @@ export class AdminService {
     });
   }
 
-  // 2. Import CSV Books
+  /**
+   * Importe des livres en masse dans un club à partir d'un fichier CSV.
+   * Valide chaque ligne et applique l'import de façon transactionnelle (tous les livres ou aucun).
+   * 
+   * @param clubSlug Le slug du club de lecture destinataire
+   * @param csv Le contenu textuel brut du fichier CSV
+   * @throws NotFoundException Si le club n'existe pas
+   * @throws BadRequestException Si le CSV est vide, mal formaté ou contient des erreurs de validation (DTO)
+   * @returns Un objet indiquant le succès et le nombre total de livres créés
+   */
   async importBooks(clubSlug: string, csv: string) {
     const club = await this.prisma.club.findUnique({
       where: { slug: clubSlug },
@@ -208,7 +243,17 @@ export class AdminService {
     return { success: true, count: booksToCreate.length };
   }
 
-  // 3. Import CSV Members
+  /**
+   * Importe et associe en masse des utilisateurs à un club à partir d'un fichier CSV.
+   * Valide les rôles et l'existence des utilisateurs, puis met à jour (ou crée) les adhésions
+   * de façon transactionnelle.
+   * 
+   * @param clubSlug Le slug du club de lecture
+   * @param csv Le contenu textuel brut du fichier CSV
+   * @throws NotFoundException Si le club n'existe pas
+   * @throws BadRequestException Si le CSV est vide, mal formaté, ou contient des lignes en erreur (ex: utilisateur inexistant)
+   * @returns Un objet de succès avec le nombre d'adhésions créées/mises à jour
+   */
   async importMembers(clubSlug: string, csv: string) {
     const club = await this.prisma.club.findUnique({
       where: { slug: clubSlug },
@@ -315,5 +360,29 @@ export class AdminService {
     });
 
     return { success: true, count: membersToUpsert.length };
+  }
+
+  /**
+   * Supprime un avis (critique) de livre.
+   * Cette action est réservée aux administrateurs pour modération.
+   * 
+   * @param id L'identifiant de l'avis à supprimer
+   * @throws NotFoundException Si l'avis n'existe pas
+   * @returns Un objet confirmant le succès de la suppression
+   */
+  async deleteReview(id: string) {
+    const review = await this.prisma.review.findUnique({
+      where: { id },
+    });
+
+    if (!review) {
+      throw new NotFoundException(`Avis avec l'ID "${id}" non trouvé.`);
+    }
+
+    await this.prisma.review.delete({
+      where: { id },
+    });
+
+    return { success: true, message: 'Avis supprimé avec succès.' };
   }
 }

@@ -21,7 +21,7 @@ jest.mock('../src/auth/auth', () => ({
   },
 }));
 
-describe('Module Clubs (e2e)', () => {
+describe('Clubs Module (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
 
@@ -75,7 +75,7 @@ describe('Module Clubs (e2e)', () => {
   });
 
   describe('POST /clubs', () => {
-    it('devrait créer un club avec un slug spécifié', async () => {
+    it('should create a club with a specified slug', async () => {
       const payload = {
         name: 'Club Spécifié',
         slug: 'mon-slug-perso',
@@ -97,7 +97,7 @@ describe('Module Clubs (e2e)', () => {
       expect(clubInDb?.slug).toBe('mon-slug-perso');
     });
 
-    it("devrait créer un club et auto-générer le slug s'il n'est pas fourni", async () => {
+    it('should create a club and auto-generate the slug if not provided', async () => {
       const payload = {
         name: 'Le Cercle des Développeurs Forts',
       };
@@ -110,7 +110,7 @@ describe('Module Clubs (e2e)', () => {
       expect(response.body.slug).toBe('le-cercle-des-developpeurs-forts');
     });
 
-    it('devrait nettoyer et slugifier correctement un nom contenant des accents et caractères spéciaux', async () => {
+    it('should clean and slugify a name containing accents and special characters correctly', async () => {
       const payload = {
         name: 'Café Littéraire & Débats (2026)!',
       };
@@ -123,7 +123,7 @@ describe('Module Clubs (e2e)', () => {
       expect(response.body.slug).toBe('cafe-litteraire-debats-2026');
     });
 
-    it('devrait échouer avec 409 Conflict si le slug existe déjà', async () => {
+    it('should fail with 409 Conflict if the slug already exists', async () => {
       await prisma.club.create({
         data: {
           name: 'Club Existant',
@@ -146,7 +146,7 @@ describe('Module Clubs (e2e)', () => {
   });
 
   describe('GET /clubs', () => {
-    it('devrait retourner la liste de tous les clubs', async () => {
+    it('should return the list of all clubs', async () => {
       await prisma.club.createMany({
         data: [
           { name: 'Club Alpha', slug: 'club-alpha' },
@@ -163,7 +163,7 @@ describe('Module Clubs (e2e)', () => {
       expect(response.body[1].slug).toBe('club-beta');
     });
 
-    it('devrait filtrer les clubs inactifs pour les visiteurs anonymes', async () => {
+    it('should filter out inactive clubs for anonymous visitors', async () => {
       await prisma.club.createMany({
         data: [
           { name: 'Club Actif', slug: 'club-actif', isActive: true },
@@ -177,7 +177,7 @@ describe('Module Clubs (e2e)', () => {
       expect(response.body[0].slug).toBe('club-actif');
     });
 
-    it('devrait afficher les clubs inactifs pour les administrateurs globaux', async () => {
+    it('should display inactive clubs for global administrators', async () => {
       const admin = await prisma.user.create({
         data: { email: 'admin@test.com', name: 'Admin', role: 'ADMIN' },
       });
@@ -194,7 +194,7 @@ describe('Module Clubs (e2e)', () => {
       expect(response.body).toHaveLength(2);
     });
 
-    it('devrait afficher les clubs inactifs pour leur propriétaire', async () => {
+    it('should display inactive clubs for their owner', async () => {
       const owner = await prisma.user.create({
         data: { email: 'owner@test.com', name: 'Owner', role: 'USER' },
       });
@@ -210,23 +210,58 @@ describe('Module Clubs (e2e)', () => {
         data: { clubId: club.id, userId: owner.id, role: 'OWNER' },
       });
 
-      // Pour l'owner
+      // For owner
       authenticateAs(owner);
       const resOwner = await apiRequest().get('/clubs');
       expect(resOwner.status).toBe(200);
       expect(resOwner.body).toHaveLength(1);
       expect(resOwner.body[0].slug).toBe('club-inactif');
 
-      // Pour un autre utilisateur
+      // For another user
       authenticateAs(otherUser);
       const resOther = await apiRequest().get('/clubs');
       expect(resOther.status).toBe(200);
       expect(resOther.body).toHaveLength(0);
     });
+
+    it('should filter clubs by name (case insensitive)', async () => {
+      await prisma.club.createMany({
+        data: [
+          { name: 'NestJS Book Club', slug: 'nestjs-book-club', isActive: true },
+          { name: 'React Readers', slug: 'react-readers', isActive: true },
+          { name: 'Vue Enthusiasts', slug: 'vue-enthusiasts', isActive: true },
+        ],
+      });
+
+      const response = await apiRequest().get('/clubs?name=nestjs');
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveLength(1);
+      expect(response.body[0].name).toBe('NestJS Book Club');
+    });
+
+    it('should paginate the returned clubs', async () => {
+      await prisma.club.createMany({
+        data: [
+          { name: 'Club A', slug: 'club-a', isActive: true },
+          { name: 'Club B', slug: 'club-b', isActive: true },
+          { name: 'Club C', slug: 'club-c', isActive: true },
+          { name: 'Club D', slug: 'club-d', isActive: true },
+          { name: 'Club E', slug: 'club-e', isActive: true },
+        ],
+      });
+
+      const response = await apiRequest().get('/clubs?page=2&limit=2');
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveLength(2);
+      // Trié par nom ascendant: Club A, Club B, Club C, Club D, Club E
+      // Page 2 avec limite 2 saute les 2 premiers (A, B) et prend les 2 suivants (C, D)
+      expect(response.body[0].name).toBe('Club C');
+      expect(response.body[1].name).toBe('Club D');
+    });
   });
 
   describe('GET /clubs/:id', () => {
-    it('devrait retourner un club par son ID', async () => {
+    it('should return a club by its ID', async () => {
       const created = await prisma.club.create({
         data: { name: 'Club Unique', slug: 'club-unique' },
       });
@@ -240,7 +275,7 @@ describe('Module Clubs (e2e)', () => {
       expect(response.body.slug).toBe('club-unique');
     });
 
-    it("devrait retourner 404 Not Found si l'ID n'existe pas", async () => {
+    it('should return 404 Not Found if the ID does not exist', async () => {
       const response = await request(app.getHttpServer()).get(
         '/clubs/non-existent-uuid-1234',
       );
@@ -248,7 +283,7 @@ describe('Module Clubs (e2e)', () => {
       expect(response.status).toBe(404);
     });
 
-    it('devrait retourner 404 si le club est inactif et que l’utilisateur est un visiteur ou membre non propriétaire', async () => {
+    it('should return 404 if the club is inactive and the user is a visitor or non-owner member', async () => {
       const otherUser = await prisma.user.create({
         data: { email: 'other@test.com', name: 'Other', role: 'USER' },
       });
@@ -269,7 +304,7 @@ describe('Module Clubs (e2e)', () => {
       expect(resMember.status).toBe(404);
     });
 
-    it('devrait retourner le club inactif si l’utilisateur est ADMIN ou OWNER du club', async () => {
+    it('should return the inactive club if the user is ADMIN or club OWNER', async () => {
       const admin = await prisma.user.create({
         data: { email: 'admin@test.com', name: 'Admin', role: 'ADMIN' },
       });
@@ -296,7 +331,7 @@ describe('Module Clubs (e2e)', () => {
   });
 
   describe('PATCH /clubs/:id', () => {
-    it("devrait mettre à jour le nom et auto-slugifier le nouveau slug s'il est passé", async () => {
+    it('should update the name and auto-slugify the new slug if provided', async () => {
       const created = await prisma.club.create({
         data: { name: 'Ancien Nom', slug: 'ancien-slug' },
       });
@@ -321,7 +356,7 @@ describe('Module Clubs (e2e)', () => {
       expect(updated?.slug).toBe('nouveau-slug');
     });
 
-    it("devrait retourner 404 si le club à modifier n'existe pas", async () => {
+    it('should return 404 if the club to modify does not exist', async () => {
       const response = await request(app.getHttpServer())
         .patch('/clubs/non-existent-uuid-1234')
         .send({ name: 'Inconnu' });
@@ -329,7 +364,7 @@ describe('Module Clubs (e2e)', () => {
       expect(response.status).toBe(404);
     });
 
-    it('devrait retourner 409 si la modification de slug cause un conflit', async () => {
+    it('should return 409 if modifying the slug causes a conflict', async () => {
       const club1 = await prisma.club.create({
         data: { name: 'Club 1', slug: 'club-un' },
       });
@@ -344,7 +379,7 @@ describe('Module Clubs (e2e)', () => {
       expect(response.status).toBe(409);
     });
 
-    it('devrait interdire de modifier isActive sans authentification ou pour un rôle non autorisé (403)', async () => {
+    it('should forbid modifying isActive without authentication or for an unauthorized role (403)', async () => {
       const user = await prisma.user.create({
         data: { email: 'user@test.com', name: 'User', role: 'USER' },
       });
@@ -369,7 +404,7 @@ describe('Module Clubs (e2e)', () => {
       expect(resEditor.status).toBe(403);
     });
 
-    it('devrait autoriser de modifier isActive pour OWNER ou ADMIN', async () => {
+    it('should allow modifying isActive for OWNER or ADMIN', async () => {
       const admin = await prisma.user.create({
         data: { email: 'admin@test.com', name: 'Admin', role: 'ADMIN' },
       });
@@ -402,7 +437,7 @@ describe('Module Clubs (e2e)', () => {
   });
 
   describe('DELETE /clubs/:id', () => {
-    it('devrait supprimer un club existant', async () => {
+    it('should delete an existing club', async () => {
       const created = await prisma.club.create({
         data: { name: 'A Supprimer', slug: 'a-supprimer' },
       });
@@ -419,7 +454,7 @@ describe('Module Clubs (e2e)', () => {
       expect(deleted).toBeNull();
     });
 
-    it("devrait retourner 404 si le club à supprimer n'existe pas", async () => {
+    it('should return 404 if the club to delete does not exist', async () => {
       const response = await request(app.getHttpServer()).delete(
         '/clubs/non-existent-uuid-1234',
       );

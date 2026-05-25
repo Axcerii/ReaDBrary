@@ -20,6 +20,8 @@ import { ClubRoles } from '../auth/decorators/club-roles.decorator';
 import { ClubRole } from '../../generated/prisma/client';
 import type { Response, Request } from 'express';
 
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+
 interface BetterAuthSession {
   user: {
     id: string;
@@ -36,6 +38,8 @@ interface AuthenticatedRequest extends Request {
   userSession?: BetterAuthSession;
 }
 
+@ApiTags('Books')
+@ApiBearerAuth()
 @Controller('clubs/:clubSlug/books')
 @UseGuards(ClubRolesGuard)
 export class BooksController {
@@ -49,6 +53,8 @@ export class BooksController {
 
   @Post()
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR)
+  @ApiOperation({ summary: 'Create a book in a club' })
+  @ApiResponse({ status: 201, description: 'Book created successfully.' })
   async create(
     @Param('clubSlug') clubSlug: string,
     @Body() createBookDto: CreateBookDto,
@@ -58,6 +64,8 @@ export class BooksController {
 
   @Get()
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR, ClubRole.READER)
+  @ApiOperation({ summary: 'List books of a club with filters and pagination' })
+  @ApiResponse({ status: 200, description: 'List of books returned successfully.' })
   async findAll(
     @Param('clubSlug') clubSlug: string,
     @Query() query: BookQueryDto,
@@ -69,6 +77,8 @@ export class BooksController {
 
   @Get('export')
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR, ClubRole.READER)
+  @ApiOperation({ summary: 'Export a club library in CSV format' })
+  @ApiResponse({ status: 200, description: 'CSV file returned.' })
   async exportCsv(
     @Param('clubSlug') clubSlug: string,
     @Res({ passthrough: true }) res: Response,
@@ -86,6 +96,9 @@ export class BooksController {
 
   @Get(':id')
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR, ClubRole.READER)
+  @ApiOperation({ summary: 'Get a book by its ID' })
+  @ApiResponse({ status: 200, description: 'Book returned successfully.' })
+  @ApiResponse({ status: 404, description: 'Book not found.' })
   async findOne(
     @Param('clubSlug') clubSlug: string,
     @Param('id') id: string,
@@ -97,6 +110,9 @@ export class BooksController {
 
   @Patch(':id')
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR)
+  @ApiOperation({ summary: 'Update a book (modify its properties or activity status)' })
+  @ApiResponse({ status: 200, description: 'Book updated successfully.' })
+  @ApiResponse({ status: 403, description: 'Forbidden for an EDITOR to modify isActive.' })
   async update(
     @Param('clubSlug') clubSlug: string,
     @Param('id') id: string,
@@ -109,6 +125,8 @@ export class BooksController {
 
   @Delete(':id')
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR)
+  @ApiOperation({ summary: 'Delete a book from the club' })
+  @ApiResponse({ status: 200, description: 'Book deleted successfully.' })
   async remove(
     @Param('clubSlug') clubSlug: string,
     @Param('id') id: string,

@@ -14,6 +14,7 @@ import { ClubRolesGuard } from '../auth/guards/club-roles.guard';
 import { ClubRoles } from '../auth/decorators/club-roles.decorator';
 import { ClubRole } from '../../generated/prisma/client';
 import { Request } from 'express';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
 interface BetterAuthSession {
   user: {
@@ -31,6 +32,8 @@ interface AuthenticatedRequest extends Request {
   userSession?: BetterAuthSession;
 }
 
+@ApiTags('Reading Progression')
+@ApiBearerAuth()
 @Controller('clubs/:clubSlug/books/:bookId')
 @UseGuards(ClubRolesGuard)
 export class ProgressionController {
@@ -44,6 +47,8 @@ export class ProgressionController {
 
   @Patch('progression')
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR, ClubRole.READER)
+  @ApiOperation({ summary: 'Update reading progression on a book' })
+  @ApiResponse({ status: 200, description: 'Progression updated successfully.' })
   async update(
     @Param('clubSlug') clubSlug: string,
     @Param('bookId') bookId: string,
@@ -66,6 +71,8 @@ export class ProgressionController {
 
   @Get('progression')
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR, ClubRole.READER)
+  @ApiOperation({ summary: 'Get reading progression and current page details' })
+  @ApiResponse({ status: 200, description: 'Reading progression returned successfully.' })
   async get(
     @Param('clubSlug') clubSlug: string,
     @Param('bookId') bookId: string,
@@ -81,6 +88,8 @@ export class ProgressionController {
 
   @Get('progressions')
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR)
+  @ApiOperation({ summary: 'Get reading progression of all club members for a book' })
+  @ApiResponse({ status: 200, description: 'Global progressions returned successfully.' })
   async getGlobal(
     @Param('clubSlug') clubSlug: string,
     @Param('bookId') bookId: string,

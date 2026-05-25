@@ -1,7 +1,8 @@
 import { Module, ValidationPipe, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_PIPE } from '@nestjs/core';
+import { APP_PIPE, APP_FILTER } from '@nestjs/core';
 import { AppController } from './app.controller';
+import { AuthController } from './auth/auth.controller';
 import { AppService } from './app.service';
 import { auth } from './auth/auth'; // Your Better Auth instance
 import { AuthModule } from '@thallesp/nestjs-better-auth';
@@ -12,7 +13,9 @@ import { BooksModule } from './books/books.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { ProgressionModule } from './progression/progression.module';
 import { AdminModule } from './admin/admin.module';
+import { PagesModule } from './pages/pages.module';
 import { AuthLoggerMiddleware } from './auth/middleware/auth-logger.middleware';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 
 @Module({
   imports: [
@@ -25,13 +28,18 @@ import { AuthLoggerMiddleware } from './auth/middleware/auth-logger.middleware';
     ReviewsModule,
     ProgressionModule,
     AdminModule,
+    PagesModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, AuthController],
   providers: [
     AppService,
     {
       provide: APP_PIPE,
       useClass: ValidationPipe,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: GlobalExceptionFilter,
     },
   ],
 })

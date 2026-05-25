@@ -29,7 +29,7 @@ jest.mock('../src/auth/auth', () => ({
   },
 }));
 
-describe('Module Reviews (e2e)', () => {
+describe('Reviews Module (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let club: Club;
@@ -135,7 +135,7 @@ describe('Module Reviews (e2e)', () => {
   const apiRequest = () => request(app.getHttpServer() as App);
 
   describe('POST /clubs/:clubSlug/books/:bookId/reviews', () => {
-    it('devrait permettre à un membre (READER) de donner son avis', async () => {
+    it('should allow a member (READER) to give their review', async () => {
       authenticateAs(readerUser);
 
       const response = await apiRequest()
@@ -153,7 +153,7 @@ describe('Module Reviews (e2e)', () => {
       expect(response.body.user.name).toBe(readerUser.name);
     });
 
-    it('devrait interdire à un non-membre de donner son avis (403)', async () => {
+    it('should forbid a non-member from giving a review (403)', async () => {
       authenticateAs(nonMemberUser);
 
       const response = await apiRequest()
@@ -166,7 +166,7 @@ describe('Module Reviews (e2e)', () => {
       expect(response.status).toBe(403);
     });
 
-    it('devrait renvoyer 401 pour un utilisateur non authentifié', async () => {
+    it('should return 401 for an unauthenticated user', async () => {
       authenticateAs(null);
 
       const response = await apiRequest()
@@ -178,7 +178,7 @@ describe('Module Reviews (e2e)', () => {
       expect(response.status).toBe(401);
     });
 
-    it('devrait échouer avec 400 Bad Request si la note est invalide (ex: 0 ou 6)', async () => {
+    it('should fail with 400 Bad Request if the rating is invalid (e.g. 0 or 6)', async () => {
       authenticateAs(readerUser);
 
       const response1 = await apiRequest()
@@ -203,16 +203,16 @@ describe('Module Reviews (e2e)', () => {
       expect(response3.status).toBe(400);
     });
 
-    it('devrait échouer avec 409 Conflict si un utilisateur donne plusieurs avis sur le même livre (unicité)', async () => {
+    it('should fail with 409 Conflict if a user submits multiple reviews for the same book (uniqueness)', async () => {
       authenticateAs(readerUser);
 
-      // Premier avis
+      // First review
       const res1 = await apiRequest()
         .post(`/clubs/${club.slug}/books/${book.id}/reviews`)
         .send({ rating: 4, comment: 'Premier commentaire' });
       expect(res1.status).toBe(201);
 
-      // Deuxième avis (devrait échouer)
+      // Second review (should fail)
       const res2 = await apiRequest()
         .post(`/clubs/${club.slug}/books/${book.id}/reviews`)
         .send({ rating: 2, comment: 'Deuxième commentaire' });
@@ -220,7 +220,7 @@ describe('Module Reviews (e2e)', () => {
       expect(res2.body.message).toContain('déjà donné votre avis');
     });
 
-    it("devrait renvoyer 404 si le livre n'appartient pas au club", async () => {
+    it('should return 404 if the book does not belong to the club', async () => {
       authenticateAs(readerUser);
 
       const response = await apiRequest()
@@ -232,7 +232,7 @@ describe('Module Reviews (e2e)', () => {
       expect(response.status).toBe(404);
     });
 
-    it('devrait renvoyer 404 lors du dépôt d’un avis sur un livre inactif pour un READER, mais 201 pour OWNER et ADMIN', async () => {
+    it('should return 404 when submitting a review on an inactive book for a READER, but 201 for OWNER and ADMIN', async () => {
       const inactiveBook = await prisma.book.create({
         data: {
           title: 'Livre Inactif',
@@ -244,21 +244,21 @@ describe('Module Reviews (e2e)', () => {
         },
       });
 
-      // READER : 404
+      // READER: 404
       authenticateAs(readerUser);
       let res = await apiRequest()
         .post(`/clubs/${club.slug}/books/${inactiveBook.id}/reviews`)
         .send({ rating: 4, comment: 'Commentaire' });
       expect(res.status).toBe(404);
 
-      // OWNER : 201
+      // OWNER: 201
       authenticateAs(ownerUser);
       res = await apiRequest()
         .post(`/clubs/${club.slug}/books/${inactiveBook.id}/reviews`)
         .send({ rating: 5, comment: 'Commentaire Owner' });
       expect(res.status).toBe(201);
 
-      // ADMIN : 201
+      // ADMIN: 201
       authenticateAs(adminUser);
       res = await apiRequest()
         .post(`/clubs/${club.slug}/books/${inactiveBook.id}/reviews`)
@@ -289,7 +289,7 @@ describe('Module Reviews (e2e)', () => {
       });
     });
 
-    it('devrait permettre à un membre de lister tous les avis d’un livre', async () => {
+    it('should allow a member to list all reviews of a book', async () => {
       authenticateAs(readerUser);
 
       const response = await apiRequest().get(
@@ -304,7 +304,7 @@ describe('Module Reviews (e2e)', () => {
       expect(response.body[1].user.name).toBe(ownerUser.name);
     });
 
-    it('devrait interdire la liste des avis à un non-membre (403)', async () => {
+    it('should forbid listing reviews to a non-member (403)', async () => {
       authenticateAs(nonMemberUser);
 
       const response = await apiRequest().get(
@@ -314,7 +314,7 @@ describe('Module Reviews (e2e)', () => {
       expect(response.status).toBe(403);
     });
 
-    it('devrait renvoyer 404 lors de la récupération des avis d’un livre inactif pour un READER, mais 200 pour OWNER et ADMIN', async () => {
+    it('should return 404 when retrieving reviews of an inactive book for a READER, but 200 for OWNER and ADMIN', async () => {
       const inactiveBook = await prisma.book.create({
         data: {
           title: 'Livre Inactif',
@@ -335,14 +335,14 @@ describe('Module Reviews (e2e)', () => {
         },
       });
 
-      // READER : 404
+      // READER: 404
       authenticateAs(readerUser);
       let res = await apiRequest().get(
         `/clubs/${club.slug}/books/${inactiveBook.id}/reviews`,
       );
       expect(res.status).toBe(404);
 
-      // OWNER : 200
+      // OWNER: 200
       authenticateAs(ownerUser);
       res = await apiRequest().get(
         `/clubs/${club.slug}/books/${inactiveBook.id}/reviews`,
@@ -350,7 +350,7 @@ describe('Module Reviews (e2e)', () => {
       expect(res.status).toBe(200);
       expect(res.body).toHaveLength(1);
 
-      // ADMIN : 200
+      // ADMIN: 200
       authenticateAs(adminUser);
       res = await apiRequest().get(
         `/clubs/${club.slug}/books/${inactiveBook.id}/reviews`,
@@ -359,8 +359,8 @@ describe('Module Reviews (e2e)', () => {
     });
   });
 
-  describe('Calcul et exposition de la note moyenne', () => {
-    it('devrait retourner averageRating = null si aucun avis n’a été laissé', async () => {
+  describe('Calculation and exposition of average rating', () => {
+    it('should return averageRating = null if no review has been left', async () => {
       authenticateAs(readerUser);
 
       const response = await apiRequest().get(
@@ -371,7 +371,7 @@ describe('Module Reviews (e2e)', () => {
       expect(response.body.averageRating).toBeNull();
     });
 
-    it('devrait retourner la note moyenne correcte après plusieurs avis', async () => {
+    it('should return the correct average rating after multiple reviews', async () => {
       authenticateAs(readerUser);
 
       // Add reviews directly in db

@@ -29,7 +29,7 @@ jest.mock('../src/auth/auth', () => ({
   },
 }));
 
-describe('Module Books (e2e)', () => {
+describe('Books Module (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let club: Club;
@@ -125,7 +125,7 @@ describe('Module Books (e2e)', () => {
     request(app.getHttpServer() as App);
 
   describe('POST /clubs/:clubSlug/books', () => {
-    it('devrait permettre à un OWNER de créer un livre', async () => {
+    it('should allow an OWNER to create a book', async () => {
       authenticateAs(ownerUser);
 
       const payload = {
@@ -149,7 +149,7 @@ describe('Module Books (e2e)', () => {
       expect(book).not.toBeNull();
     });
 
-    it('devrait permettre à un EDITOR de créer un livre', async () => {
+    it('should allow an EDITOR to create a book', async () => {
       authenticateAs(editorUser);
 
       const response = await apiRequest()
@@ -164,7 +164,7 @@ describe('Module Books (e2e)', () => {
       expect(response.status).toBe(201);
     });
 
-    it('devrait interdire à un READER de créer un livre (403)', async () => {
+    it('should forbid a READER from creating a book (403)', async () => {
       authenticateAs(readerUser);
 
       const response = await apiRequest()
@@ -179,7 +179,7 @@ describe('Module Books (e2e)', () => {
       expect(response.status).toBe(403);
     });
 
-    it('devrait rejeter un utilisateur non authentifié (401)', async () => {
+    it('should reject an unauthenticated user (401)', async () => {
       authenticateAs(null);
 
       const response = await apiRequest()
@@ -194,7 +194,7 @@ describe('Module Books (e2e)', () => {
       expect(response.status).toBe(401);
     });
 
-    it('devrait permettre à un ADMIN global de créer un livre même hors club', async () => {
+    it('should allow a global ADMIN to create a book even if not in the club', async () => {
       authenticateAs(adminUser);
 
       const response = await apiRequest()
@@ -209,7 +209,7 @@ describe('Module Books (e2e)', () => {
       expect(response.status).toBe(201);
     });
 
-    it('devrait échouer avec 400 Bad Request si les validations DTO échouent', async () => {
+    it('should fail with 400 Bad Request if DTO validations fail', async () => {
       authenticateAs(ownerUser);
 
       const response = await apiRequest()
@@ -265,7 +265,7 @@ describe('Module Books (e2e)', () => {
       });
     });
 
-    it('devrait permettre à un READER de lister tous les livres du club', async () => {
+    it('should allow a READER to list all books in the club', async () => {
       authenticateAs(readerUser);
 
       const response = await apiRequest().get(`/clubs/${club.slug}/books`);
@@ -276,7 +276,7 @@ describe('Module Books (e2e)', () => {
       expect(books).toHaveLength(3);
     });
 
-    it('devrait filtrer les livres par auteur', async () => {
+    it('should filter books by author', async () => {
       authenticateAs(readerUser);
 
       const response = await apiRequest().get(
@@ -290,7 +290,7 @@ describe('Module Books (e2e)', () => {
       expect(books[0].title).toBe('Livre Trois');
     });
 
-    it('devrait filtrer les livres par genre (insensible à la casse)', async () => {
+    it('should filter books by genre (case insensitive)', async () => {
       authenticateAs(readerUser);
 
       const response = await apiRequest().get(
@@ -304,7 +304,7 @@ describe('Module Books (e2e)', () => {
       expect(books[0].title).toBe('Livre Deux');
     });
 
-    it('devrait paginer correctement les résultats', async () => {
+    it('should paginate results correctly', async () => {
       authenticateAs(readerUser);
 
       const response = await apiRequest().get(
@@ -318,7 +318,7 @@ describe('Module Books (e2e)', () => {
       expect(books[0].title).toBe('Livre Un'); // Order by createdAt desc, page 2 has the first created
     });
 
-    it('devrait masquer les livres inactifs pour READER et EDITOR, mais les afficher pour OWNER et ADMIN', async () => {
+    it('should hide inactive books for READER and EDITOR, but display them for OWNER and ADMIN', async () => {
       await prisma.book.create({
         data: {
           title: 'Livre Inactif',
@@ -357,7 +357,7 @@ describe('Module Books (e2e)', () => {
       expect(res.body).toHaveLength(4);
     });
 
-    it("devrait interdire l'accès à un non-membre (403)", async () => {
+    it('should forbid access to a non-member (403)', async () => {
       authenticateAs(nonMemberUser);
 
       const response = await apiRequest().get(`/clubs/${club.slug}/books`);
@@ -381,7 +381,7 @@ describe('Module Books (e2e)', () => {
       });
     });
 
-    it('devrait retourner le livre pour un membre du club', async () => {
+    it('should return the book for a club member', async () => {
       authenticateAs(readerUser);
 
       const response = await apiRequest().get(
@@ -394,7 +394,7 @@ describe('Module Books (e2e)', () => {
       expect(body.title).toBe('Livre Unique');
     });
 
-    it("devrait renvoyer 404 si le livre n'existe pas dans ce club", async () => {
+    it("should return 404 if the book does not exist in this club", async () => {
       authenticateAs(readerUser);
 
       const response = await apiRequest().get(
@@ -404,7 +404,7 @@ describe('Module Books (e2e)', () => {
       expect(response.status).toBe(404);
     });
 
-    it('devrait retourner 404 pour un livre inactif pour READER et EDITOR, mais 200 pour OWNER et ADMIN', async () => {
+    it('should return 404 for an inactive book for READER and EDITOR, but 200 for OWNER and ADMIN', async () => {
       const inactiveBook = await prisma.book.create({
         data: {
           title: 'Livre Secret Inactif',
@@ -454,7 +454,7 @@ describe('Module Books (e2e)', () => {
       });
     });
 
-    it('devrait permettre à un EDITOR de mettre à jour le livre', async () => {
+    it('should allow an EDITOR to update the book', async () => {
       authenticateAs(editorUser);
 
       const response = await apiRequest()
@@ -468,7 +468,7 @@ describe('Module Books (e2e)', () => {
       expect(body.pages).toBe(180);
     });
 
-    it('devrait refuser la mise à jour à un READER (403)', async () => {
+    it('should deny update access to a READER (403)', async () => {
       authenticateAs(readerUser);
 
       const response = await apiRequest()
@@ -478,7 +478,7 @@ describe('Module Books (e2e)', () => {
       expect(response.status).toBe(403);
     });
 
-    it('devrait interdire à un EDITOR de modifier isActive (403)', async () => {
+    it('should forbid an EDITOR from modifying isActive (403)', async () => {
       authenticateAs(editorUser);
 
       const response = await apiRequest()
@@ -488,8 +488,8 @@ describe('Module Books (e2e)', () => {
       expect(response.status).toBe(403);
     });
 
-    it('devrait autoriser à un OWNER ou ADMIN de modifier isActive (200)', async () => {
-      // Par l'OWNER
+    it('should allow an OWNER or ADMIN to modify isActive (200)', async () => {
+      // By OWNER
       authenticateAs(ownerUser);
       let response = await apiRequest()
         .patch(`/clubs/${club.slug}/books/${createdBook.id}`)
@@ -497,7 +497,7 @@ describe('Module Books (e2e)', () => {
       expect(response.status).toBe(200);
       expect(response.body.isActive).toBe(false);
 
-      // Par l'ADMIN (réactiver)
+      // By ADMIN (reactivate)
       authenticateAs(adminUser);
       response = await apiRequest()
         .patch(`/clubs/${club.slug}/books/${createdBook.id}`)
@@ -506,7 +506,7 @@ describe('Module Books (e2e)', () => {
       expect(response.body.isActive).toBe(true);
     });
 
-    it('devrait renvoyer 404 si un EDITOR tente de modifier un livre inactif (car invisible pour lui)', async () => {
+    it('should return 404 if an EDITOR attempts to modify an inactive book (since it is invisible to them)', async () => {
       const inactiveBook = await prisma.book.create({
         data: {
           title: 'Inactif',
@@ -542,7 +542,7 @@ describe('Module Books (e2e)', () => {
       });
     });
 
-    it('devrait permettre à un OWNER de supprimer le livre', async () => {
+    it('should allow an OWNER to delete the book', async () => {
       authenticateAs(ownerUser);
 
       const response = await apiRequest().delete(
@@ -557,7 +557,7 @@ describe('Module Books (e2e)', () => {
       expect(book).toBeNull();
     });
 
-    it('devrait refuser la suppression à un READER (403)', async () => {
+    it('should deny deletion access to a READER (403)', async () => {
       authenticateAs(readerUser);
 
       const response = await apiRequest().delete(
@@ -590,7 +590,7 @@ describe('Module Books (e2e)', () => {
       });
     });
 
-    it('devrait exporter la liste des livres au format CSV', async () => {
+    it('should export the list of books in CSV format', async () => {
       authenticateAs(readerUser);
 
       const response = await apiRequest().get(
@@ -609,7 +609,7 @@ describe('Module Books (e2e)', () => {
       expect(csvLines[2]).toContain('Livre B');
     });
 
-    it("devrait interdire l'export à un non-membre (403)", async () => {
+    it('should forbid export access to a non-member (403)', async () => {
       authenticateAs(nonMemberUser);
 
       const response = await apiRequest().get(
@@ -619,7 +619,7 @@ describe('Module Books (e2e)', () => {
       expect(response.status).toBe(403);
     });
 
-    it('devrait masquer les livres inactifs dans l’export CSV pour READER, mais les inclure pour OWNER', async () => {
+    it('should hide inactive books in the CSV export for READER, but include them for OWNER', async () => {
       await prisma.book.create({
         data: {
           title: 'Livre Inactif',
@@ -636,7 +636,7 @@ describe('Module Books (e2e)', () => {
       let response = await apiRequest().get(`/clubs/${club.slug}/books/export`);
       expect(response.status).toBe(200);
       let csvLines = response.text.trim().split('\n');
-      // En-tête + Livre A + Livre B = 3 lignes
+      // Header + Livre A + Livre B = 3 lines
       expect(csvLines).toHaveLength(3);
       expect(response.text).not.toContain('Livre Inactif');
 
@@ -645,7 +645,7 @@ describe('Module Books (e2e)', () => {
       response = await apiRequest().get(`/clubs/${club.slug}/books/export`);
       expect(response.status).toBe(200);
       csvLines = response.text.trim().split('\n');
-      // En-tête + Livre A + Livre B + Livre Inactif = 4 lignes
+      // Header + Livre A + Livre B + Livre Inactif = 4 lines
       expect(csvLines).toHaveLength(4);
       expect(response.text).toContain('Livre Inactif');
     });

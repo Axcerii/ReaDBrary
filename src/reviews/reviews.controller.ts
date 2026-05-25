@@ -14,6 +14,7 @@ import { ClubRolesGuard } from '../auth/guards/club-roles.guard';
 import { ClubRoles } from '../auth/decorators/club-roles.decorator';
 import { ClubRole } from '../../generated/prisma/client';
 import { Request } from 'express';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
 interface BetterAuthSession {
   user: {
@@ -25,9 +26,14 @@ interface BetterAuthSession {
 }
 
 interface AuthenticatedRequest extends Request {
+  clubMember?: {
+    role: 'OWNER' | 'EDITOR' | 'READER';
+  };
   userSession?: BetterAuthSession;
 }
 
+@ApiTags('Reviews')
+@ApiBearerAuth()
 @Controller('clubs/:clubSlug/books/:bookId/reviews')
 @UseGuards(ClubRolesGuard)
 export class ReviewsController {
@@ -41,6 +47,8 @@ export class ReviewsController {
 
   @Post()
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR, ClubRole.READER)
+  @ApiOperation({ summary: 'Create or update a review on a book' })
+  @ApiResponse({ status: 201, description: 'Review created or updated successfully.' })
   async create(
     @Param('clubSlug') clubSlug: string,
     @Param('bookId') bookId: string,
@@ -63,6 +71,8 @@ export class ReviewsController {
 
   @Get()
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR, ClubRole.READER)
+  @ApiOperation({ summary: 'Retrieve all reviews of a book' })
+  @ApiResponse({ status: 200, description: 'List of reviews returned.' })
   async findAll(
     @Param('clubSlug') clubSlug: string,
     @Param('bookId') bookId: string,

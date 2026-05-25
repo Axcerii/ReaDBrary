@@ -29,7 +29,7 @@ jest.mock('../src/auth/auth', () => ({
   },
 }));
 
-describe('Module Progression (e2e)', () => {
+describe('Progression Module (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let club: Club;
@@ -135,7 +135,7 @@ describe('Module Progression (e2e)', () => {
   const apiRequest = () => request(app.getHttpServer() as App);
 
   describe('PATCH /clubs/:clubSlug/books/:bookId/progression', () => {
-    it('devrait permettre à un membre (READER) de mettre à jour sa progression', async () => {
+    it('should allow a member (READER) to update their progression', async () => {
       authenticateAs(readerUser);
 
       const response = await apiRequest()
@@ -157,15 +157,15 @@ describe('Module Progression (e2e)', () => {
       expect(body.progressPercentage).toBe(50);
     });
 
-    it('devrait permettre à un membre (READER) de modifier une progression existante', async () => {
+    it('should allow a member (READER) to modify an existing progression', async () => {
       authenticateAs(readerUser);
 
-      // Première progression
+      // First progression
       await apiRequest()
         .patch(`/clubs/${club.slug}/books/${book.id}/progression`)
         .send({ currentPage: 25 });
 
-      // Deuxième progression
+      // Second progression
       const response = await apiRequest()
         .patch(`/clubs/${club.slug}/books/${book.id}/progression`)
         .send({ currentPage: 75 });
@@ -179,7 +179,7 @@ describe('Module Progression (e2e)', () => {
       expect(body.progressPercentage).toBe(75);
     });
 
-    it('devrait interdire à un non-membre de mettre à jour sa progression (403)', async () => {
+    it('should forbid a non-member from updating their progression (403)', async () => {
       authenticateAs(nonMemberUser);
 
       const response = await apiRequest()
@@ -191,7 +191,7 @@ describe('Module Progression (e2e)', () => {
       expect(response.status).toBe(403);
     });
 
-    it('devrait renvoyer 401 pour un utilisateur non authentifié', async () => {
+    it('should return 401 for an unauthenticated user', async () => {
       authenticateAs(null);
 
       const response = await apiRequest()
@@ -203,7 +203,7 @@ describe('Module Progression (e2e)', () => {
       expect(response.status).toBe(401);
     });
 
-    it('devrait échouer avec 400 si la page est négative', async () => {
+    it('should fail with 400 if the page is negative', async () => {
       authenticateAs(readerUser);
 
       const response = await apiRequest()
@@ -215,7 +215,7 @@ describe('Module Progression (e2e)', () => {
       expect(response.status).toBe(400);
     });
 
-    it('devrait échouer avec 400 si la page n’est pas un entier', async () => {
+    it('should fail with 400 if the page is not an integer', async () => {
       authenticateAs(readerUser);
 
       const response = await apiRequest()
@@ -227,13 +227,13 @@ describe('Module Progression (e2e)', () => {
       expect(response.status).toBe(400);
     });
 
-    it('devrait échouer avec 400 si la page dépasse le nombre total de pages du livre', async () => {
+    it('should fail with 400 if the page exceeds the total page count of the book', async () => {
       authenticateAs(readerUser);
 
       const response = await apiRequest()
         .patch(`/clubs/${club.slug}/books/${book.id}/progression`)
         .send({
-          currentPage: 101, // Le livre a 100 pages
+          currentPage: 101, // The book has 100 pages
         });
 
       expect(response.status).toBe(400);
@@ -244,7 +244,7 @@ describe('Module Progression (e2e)', () => {
       expect(message).toContain('ne peut pas dépasser');
     });
 
-    it("devrait renvoyer 404 si le livre n'appartient pas au club", async () => {
+    it('should return 404 if the book does not belong to the club', async () => {
       authenticateAs(readerUser);
 
       const response = await apiRequest()
@@ -256,7 +256,7 @@ describe('Module Progression (e2e)', () => {
       expect(response.status).toBe(404);
     });
 
-    it('devrait renvoyer 404 lors de la mise à jour de progression sur un livre inactif pour un READER, mais 200 pour OWNER et ADMIN', async () => {
+    it('should return 404 when updating progression on an inactive book for a READER, but 200 for OWNER and ADMIN', async () => {
       const inactiveBook = await prisma.book.create({
         data: {
           title: 'Livre Inactif',
@@ -292,7 +292,7 @@ describe('Module Progression (e2e)', () => {
   });
 
   describe('GET /clubs/:clubSlug/books/:bookId/progression', () => {
-    it('devrait retourner currentPage = 0 si aucune progression n’a été enregistrée', async () => {
+    it('should return currentPage = 0 if no progression has been recorded', async () => {
       authenticateAs(readerUser);
 
       const response = await apiRequest().get(
@@ -310,10 +310,10 @@ describe('Module Progression (e2e)', () => {
       expect(body.id).toBeNull();
     });
 
-    it('devrait retourner la progression enregistrée correcte', async () => {
+    it('should return the correct recorded progression', async () => {
       authenticateAs(readerUser);
 
-      // Enregistrer progression
+      // Record progression
       await apiRequest()
         .patch(`/clubs/${club.slug}/books/${book.id}/progression`)
         .send({ currentPage: 40 });
@@ -333,7 +333,7 @@ describe('Module Progression (e2e)', () => {
       expect(body.id).not.toBeNull();
     });
 
-    it('devrait interdire l’accès à un non-membre (403)', async () => {
+    it('should deny access to a non-member (403)', async () => {
       authenticateAs(nonMemberUser);
 
       const response = await apiRequest().get(
@@ -343,7 +343,7 @@ describe('Module Progression (e2e)', () => {
       expect(response.status).toBe(403);
     });
 
-    it('devrait renvoyer 404 lors de la lecture de la progression sur un livre inactif pour un READER, mais 200 pour OWNER et ADMIN', async () => {
+    it('should return 404 when reading progression on an inactive book for a READER, but 200 for OWNER and ADMIN', async () => {
       const inactiveBook = await prisma.book.create({
         data: {
           title: 'Livre Inactif',
@@ -389,7 +389,7 @@ describe('Module Progression (e2e)', () => {
 
   describe('GET /clubs/:clubSlug/books/:bookId/progressions', () => {
     beforeEach(async () => {
-      // Enregistrer des progressions directes ou via API
+      // Record progressions directly or via API
       authenticateAs(readerUser);
       await apiRequest()
         .patch(`/clubs/${club.slug}/books/${book.id}/progression`)
@@ -401,7 +401,7 @@ describe('Module Progression (e2e)', () => {
         .send({ currentPage: 90 });
     });
 
-    it('devrait permettre à l’OWNER de consulter la progression globale du club', async () => {
+    it('should allow the OWNER to view the global club progression', async () => {
       authenticateAs(ownerUser);
 
       const response = await apiRequest().get(
@@ -428,7 +428,7 @@ describe('Module Progression (e2e)', () => {
       expect(editorProg).toBeDefined();
       expect(readerProg).toBeDefined();
 
-      expect(ownerProg!.currentPage).toBe(0); // non commencé
+      expect(ownerProg!.currentPage).toBe(0); // not started
       expect(ownerProg!.progressPercentage).toBe(0);
       expect(ownerProg!.userName).toBe(ownerUser.name);
 
@@ -441,7 +441,7 @@ describe('Module Progression (e2e)', () => {
       expect(readerProg!.userName).toBe(readerUser.name);
     });
 
-    it('devrait permettre à l’EDITOR de consulter la progression globale du club', async () => {
+    it('should allow the EDITOR to view the global club progression', async () => {
       authenticateAs(editorUser);
 
       const response = await apiRequest().get(
@@ -455,7 +455,7 @@ describe('Module Progression (e2e)', () => {
       expect(body).toHaveLength(3);
     });
 
-    it('devrait interdire au READER de consulter la progression globale (403)', async () => {
+    it('should forbid the READER from viewing the global progression (403)', async () => {
       authenticateAs(readerUser);
 
       const response = await apiRequest().get(
@@ -465,7 +465,7 @@ describe('Module Progression (e2e)', () => {
       expect(response.status).toBe(403);
     });
 
-    it('devrait interdire au non-membre de consulter la progression globale (403)', async () => {
+    it('should forbid non-members from viewing the global progression (403)', async () => {
       authenticateAs(nonMemberUser);
 
       const response = await apiRequest().get(
@@ -475,7 +475,7 @@ describe('Module Progression (e2e)', () => {
       expect(response.status).toBe(403);
     });
 
-    it('devrait renvoyer 404 lors de la consultation de la progression globale d’un livre inactif pour un EDITOR, mais 200 pour OWNER et ADMIN', async () => {
+    it('should return 404 when viewing the global progression of an inactive book for an EDITOR, but 200 for OWNER and ADMIN', async () => {
       const inactiveBook = await prisma.book.create({
         data: {
           title: 'Livre Inactif',

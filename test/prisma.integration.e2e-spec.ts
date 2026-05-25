@@ -47,26 +47,26 @@ describe('Prisma Integration & Database Connection', () => {
     }
   });
 
-  // --- LE TEST ---
-  it('devrait pouvoir créer un club dans la base de données de test', async () => {
-    // Arrange (Préparation)
+  // --- THE TEST ---
+  it('should be able to create a club in the test database', async () => {
+    // Arrange
     const newClubData = {
       name: 'Le Cercle des Lecteurs',
       slug: 'le-cercle-des-lecteurs',
     };
 
-    // Act (Action)
+    // Act
     const createdClub = await prisma.club.create({
       data: newClubData,
     });
 
-    // Assert (Vérification)
+    // Assert
     expect(createdClub).toBeDefined();
     expect(createdClub.id).toBeDefined();
     expect(createdClub.name).toBe('Le Cercle des Lecteurs');
     expect(createdClub.slug).toBe('le-cercle-des-lecteurs');
 
-    // On vérifie que c'est bien stocké en allant le relire
+    // Verify that it is stored by reading it back
     const clubInDb = await prisma.club.findUnique({
       where: { id: createdClub.id },
     });

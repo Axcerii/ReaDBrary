@@ -18,6 +18,16 @@ jest.mock('@thallesp/nestjs-better-auth', () => ({
       exports: [],
     })),
   },
+  AllowAnonymous: () => () => {},
+  OptionalAuth: () => () => {},
+  Public: () => () => {},
+  Optional: () => () => {},
+  Roles: () => () => {},
+  OrgRoles: () => () => {},
+  Session: () => () => {},
+  BeforeHook: () => () => {},
+  AfterHook: () => () => {},
+  Hook: () => () => {},
 }));
 
 import { ConfigModule, ConfigService } from '@nestjs/config';
