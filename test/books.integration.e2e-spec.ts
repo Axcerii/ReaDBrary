@@ -121,8 +121,7 @@ describe('Books Module (e2e)', () => {
   };
 
   // Helper to bypass ESLint any warning for supertest request app.getHttpServer()
-  const apiRequest = () =>
-    request(app.getHttpServer() as App);
+  const apiRequest = () => request(app.getHttpServer() as App);
 
   describe('POST /clubs/:clubSlug/books', () => {
     it('should allow an OWNER to create a book', async () => {
@@ -335,7 +334,9 @@ describe('Books Module (e2e)', () => {
       let res = await apiRequest().get(`/clubs/${club.slug}/books`);
       expect(res.status).toBe(200);
       expect(res.body).toHaveLength(3);
-      expect(res.body.find((b: any) => b.title === 'Livre Inactif')).toBeUndefined();
+      expect(
+        res.body.find((b: any) => b.title === 'Livre Inactif'),
+      ).toBeUndefined();
 
       // EDITOR : ne voit que les 3 livres actifs
       authenticateAs(editorUser);
@@ -348,7 +349,9 @@ describe('Books Module (e2e)', () => {
       res = await apiRequest().get(`/clubs/${club.slug}/books`);
       expect(res.status).toBe(200);
       expect(res.body).toHaveLength(4);
-      expect(res.body.find((b: any) => b.title === 'Livre Inactif')).toBeDefined();
+      expect(
+        res.body.find((b: any) => b.title === 'Livre Inactif'),
+      ).toBeDefined();
 
       // ADMIN : voit les 4 livres
       authenticateAs(adminUser);
@@ -394,7 +397,7 @@ describe('Books Module (e2e)', () => {
       expect(body.title).toBe('Livre Unique');
     });
 
-    it("should return 404 if the book does not exist in this club", async () => {
+    it('should return 404 if the book does not exist in this club', async () => {
       authenticateAs(readerUser);
 
       const response = await apiRequest().get(
@@ -418,23 +421,31 @@ describe('Books Module (e2e)', () => {
 
       // READER
       authenticateAs(readerUser);
-      let res = await apiRequest().get(`/clubs/${club.slug}/books/${inactiveBook.id}`);
+      let res = await apiRequest().get(
+        `/clubs/${club.slug}/books/${inactiveBook.id}`,
+      );
       expect(res.status).toBe(404);
 
       // EDITOR
       authenticateAs(editorUser);
-      res = await apiRequest().get(`/clubs/${club.slug}/books/${inactiveBook.id}`);
+      res = await apiRequest().get(
+        `/clubs/${club.slug}/books/${inactiveBook.id}`,
+      );
       expect(res.status).toBe(404);
 
       // OWNER
       authenticateAs(ownerUser);
-      res = await apiRequest().get(`/clubs/${club.slug}/books/${inactiveBook.id}`);
+      res = await apiRequest().get(
+        `/clubs/${club.slug}/books/${inactiveBook.id}`,
+      );
       expect(res.status).toBe(200);
       expect(res.body.title).toBe('Livre Secret Inactif');
 
       // ADMIN
       authenticateAs(adminUser);
-      res = await apiRequest().get(`/clubs/${club.slug}/books/${inactiveBook.id}`);
+      res = await apiRequest().get(
+        `/clubs/${club.slug}/books/${inactiveBook.id}`,
+      );
       expect(res.status).toBe(200);
     });
   });

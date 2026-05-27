@@ -17,7 +17,7 @@ export class ClubsService {
    * Convertit une chaîne de caractères en slug d'URL valide.
    * Supprime les accents, convertit en minuscules, remplace les espaces par des tirets
    * et élimine les caractères spéciaux.
-   * 
+   *
    * @param text Le texte à slugifier
    * @returns Le slug résultant
    */
@@ -36,7 +36,7 @@ export class ClubsService {
   /**
    * Crée un nouveau club de lecture.
    * Génère automatiquement un slug unique à partir du nom si aucun n'est fourni.
-   * 
+   *
    * @param createClubDto Les données du club à créer
    * @throws ConflictException Si le slug est déjà utilisé
    * @returns Le club créé
@@ -65,12 +65,15 @@ export class ClubsService {
    * - Les administrateurs globaux voient tous les clubs.
    * - Les utilisateurs connectés voient les clubs actifs, ainsi que les clubs inactifs dont ils sont le propriétaire (OWNER).
    * - Les utilisateurs anonymes voient uniquement les clubs actifs.
-   * 
+   *
    * @param query Les paramètres de filtrage et de pagination (nom, page, limite)
    * @param sessionUser L'utilisateur connecté à l'origine de la requête
    * @returns Un tableau de clubs répondant aux critères
    */
-  async findAll(query: ClubQueryDto, sessionUser?: { id: string; role: string } | null) {
+  async findAll(
+    query: ClubQueryDto,
+    sessionUser?: { id: string; role: string } | null,
+  ) {
     const page = Number(query.page ?? 1);
     const limit = Number(query.limit ?? 10);
     const skip = (page - 1) * limit;
@@ -117,7 +120,7 @@ export class ClubsService {
   /**
    * Récupère un club spécifique par son identifiant.
    * Valide les droits d'accès si le club est désactivé.
-   * 
+   *
    * @param id L'identifiant du club
    * @param sessionUser L'utilisateur à l'origine de la requête (pour la validation des accès inactifs)
    * @throws NotFoundException Si le club n'existe pas ou s'il est inactif et que l'utilisateur n'y a pas droit
@@ -151,7 +154,7 @@ export class ClubsService {
   /**
    * Met à jour les informations d'un club spécifique.
    * Seuls les administrateurs globaux ou propriétaires de club peuvent désactiver/réactiver un club.
-   * 
+   *
    * @param id L'identifiant du club à modifier
    * @param updateClubDto Les nouvelles données à appliquer
    * @param sessionUser L'utilisateur effectuant la modification
@@ -215,7 +218,7 @@ export class ClubsService {
 
   /**
    * Supprime définitivement un club de lecture par son identifiant.
-   * 
+   *
    * @param id L'identifiant du club à supprimer
    * @throws NotFoundException Si le club n'existe pas
    * @returns Le club supprimé

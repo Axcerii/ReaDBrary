@@ -47,7 +47,9 @@ export class AdminGuard implements CanActivate {
     }
 
     if (!dbUser.isActive) {
-      throw new ForbiddenException('Votre compte a été désactivé par un administrateur.');
+      throw new ForbiddenException(
+        'Votre compte a été désactivé par un administrateur.',
+      );
     }
 
     if (dbUser.role !== 'ADMIN') {

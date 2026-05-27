@@ -1,8 +1,16 @@
-import { Controller, Post, Get, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AllowAnonymous } from '@thallesp/nestjs-better-auth';
 import { SignUpEmailDto } from './dto/sign-up.dto';
 import { SignInEmailDto } from './dto/sign-in.dto';
+import { SignInSocialDto } from './dto/sign-in-social.dto';
 
 @ApiTags('Authentication')
 @AllowAnonymous()
@@ -48,6 +56,26 @@ export class AuthController {
     return { token: 'string', user: {} };
   }
 
+  @Post('sign-in/social')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Sign in with social OAuth provider',
+    description: 'Authenticates a user via Google OAuth or another configured provider.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Successful redirect url generated or session created.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'OAuth provider or configuration error.',
+  })
+  signInSocial(@Body() signInSocialDto: SignInSocialDto) {
+    // Cette route est interceptée et traitée par le middleware Better Auth.
+    // Cette méthode sert uniquement à la génération de la documentation Swagger.
+    return { url: 'string' };
+  }
+
   @Post('sign-out')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -67,7 +95,8 @@ export class AuthController {
   @Get('get-session')
   @ApiOperation({
     summary: 'Get active session',
-    description: 'Returns information about the currently active session and user.',
+    description:
+      'Returns information about the currently active session and user.',
   })
   @ApiResponse({
     status: 200,

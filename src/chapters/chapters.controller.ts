@@ -13,9 +13,9 @@ import {
   UploadedFile,
   BadRequestException,
 } from '@nestjs/common';
-import { PagesService } from './pages.service';
-import { CreatePageDto } from './dto/create-page.dto';
-import { UpdatePageDto } from './dto/update-page.dto';
+import { ChaptersService } from './chapters.service';
+import { CreateChapterDto } from './dto/create-chapter.dto';
+import { UpdateChapterDto } from './dto/update-chapter.dto';
 import { ClubRolesGuard } from '../auth/guards/club-roles.guard';
 import { ClubRoles } from '../auth/decorators/club-roles.decorator';
 import { ClubRole } from '../../generated/prisma/client';
@@ -23,7 +23,14 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { Request } from 'express';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiBody,
+} from '@nestjs/swagger';
 
 interface BetterAuthSession {
   user: {
@@ -41,12 +48,12 @@ interface AuthenticatedRequest extends Request {
   userSession?: BetterAuthSession;
 }
 
-@ApiTags('Pages')
+@ApiTags('Chapters')
 @ApiBearerAuth()
-@Controller('clubs/:clubSlug/books/:bookId/pages')
+@Controller('clubs/:clubSlug/books/:bookId/chapters')
 @UseGuards(ClubRolesGuard)
-export class PagesController {
-  constructor(private readonly pagesService: PagesService) {}
+export class ChaptersController {
+  constructor(private readonly chaptersService: ChaptersService) {}
 
   private getUserStatus(req: AuthenticatedRequest) {
     const isAdmin = req.userSession?.user?.role === 'ADMIN';
@@ -56,20 +63,22 @@ export class PagesController {
 
   @Post()
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR)
-  @ApiOperation({ summary: 'Create a new page in a book and shift subsequent pages up' })
-  @ApiResponse({ status: 201, description: 'Page created successfully.' })
-  @ApiResponse({ status: 400, description: 'Invalid page index.' })
+  @ApiOperation({
+    summary: 'Create a new chapter in a book and shift subsequent chapters up',
+  })
+  @ApiResponse({ status: 201, description: 'Chapter created successfully.' })
+  @ApiResponse({ status: 400, description: 'Invalid chapter index.' })
   async create(
     @Param('clubSlug') clubSlug: string,
     @Param('bookId') bookId: string,
-    @Body() createPageDto: CreatePageDto,
+    @Body() createChapterDto: CreateChapterDto,
     @Req() req: AuthenticatedRequest,
   ) {
     const userStatus = this.getUserStatus(req);
-    return this.pagesService.create(
+    return this.chaptersService.create(
       clubSlug,
       bookId,
-      createPageDto,
+      createChapterDto,
       userStatus,
     );
   }
@@ -80,7 +89,11 @@ export class PagesController {
     FileInterceptor('file', {
       storage: diskStorage({
         destination: './uploads',
-        filename: (req, file, cb) => {
+        filename: (
+          _req: Request,
+          file: { originalname: string },
+          cb: (error: Error | null, filename: string) => void,
+        ) => {
           const uniqueSuffix =
             Date.now() + '-' + Math.round(Math.random() * 1e9);
           cb(null, `${uniqueSuffix}${extname(file.originalname)}`);
@@ -88,7 +101,7 @@ export class PagesController {
       }),
     }),
   )
-  @ApiOperation({ summary: 'Upload an image for a page' })
+  @ApiOperation({ summary: 'Upload an image for the chapter markdown' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -101,8 +114,11 @@ export class PagesController {
       },
     },
   })
-  @ApiResponse({ status: 201, description: 'Image uploaded successfully, returns image URL.' })
-  async uploadFile(@UploadedFile() file: any) {
+  @ApiResponse({
+    status: 201,
+    description: 'Image uploaded successfully, returns image URL.',
+  })
+  uploadFile(@UploadedFile() file: { filename: string }) {
     if (!file) {
       throw new BadRequestException('No file provided.');
     }
@@ -113,8 +129,11 @@ export class PagesController {
 
   @Get()
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR, ClubRole.READER)
-  @ApiOperation({ summary: 'List pages of a book with pagination (max 50)' })
-  @ApiResponse({ status: 200, description: 'List of pages returned successfully.' })
+  @ApiOperation({ summary: 'List chapters of a book with pagination (max 50)' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of chapters returned successfully.',
+  })
   async findAll(
     @Param('clubSlug') clubSlug: string,
     @Param('bookId') bookId: string,
@@ -125,7 +144,7 @@ export class PagesController {
     const userStatus = this.getUserStatus(req);
     const pageNum = page ? Number(page) : undefined;
     const limitNum = limit ? Number(limit) : undefined;
-    return this.pagesService.findAll(
+    return this.chaptersService.findAll(
       clubSlug,
       bookId,
       { page: pageNum, limit: limitNum },
@@ -135,9 +154,9 @@ export class PagesController {
 
   @Get(':index')
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR, ClubRole.READER)
-  @ApiOperation({ summary: 'Get a page by its index' })
-  @ApiResponse({ status: 200, description: 'Page returned successfully.' })
-  @ApiResponse({ status: 404, description: 'Page not found.' })
+  @ApiOperation({ summary: 'Get a chapter by its index' })
+  @ApiResponse({ status: 200, description: 'Chapter returned successfully.' })
+  @ApiResponse({ status: 404, description: 'Chapter not found.' })
   async findOne(
     @Param('clubSlug') clubSlug: string,
     @Param('bookId') bookId: string,
@@ -145,7 +164,7 @@ export class PagesController {
     @Req() req: AuthenticatedRequest,
   ) {
     const userStatus = this.getUserStatus(req);
-    return this.pagesService.findOne(
+    return this.chaptersService.findOne(
       clubSlug,
       bookId,
       Number(index),
@@ -155,29 +174,34 @@ export class PagesController {
 
   @Patch(':index')
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR)
-  @ApiOperation({ summary: 'Update a page and handle index shifting if the index is modified' })
-  @ApiResponse({ status: 200, description: 'Page updated successfully.' })
+  @ApiOperation({
+    summary:
+      'Update a chapter and handle index shifting if the index is modified',
+  })
+  @ApiResponse({ status: 200, description: 'Chapter updated successfully.' })
   async update(
     @Param('clubSlug') clubSlug: string,
     @Param('bookId') bookId: string,
     @Param('index') index: string,
-    @Body() updatePageDto: UpdatePageDto,
+    @Body() updateChapterDto: UpdateChapterDto,
     @Req() req: AuthenticatedRequest,
   ) {
     const userStatus = this.getUserStatus(req);
-    return this.pagesService.update(
+    return this.chaptersService.update(
       clubSlug,
       bookId,
       Number(index),
-      updatePageDto,
+      updateChapterDto,
       userStatus,
     );
   }
 
   @Delete(':index')
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR)
-  @ApiOperation({ summary: 'Delete a page and shift subsequent pages down' })
-  @ApiResponse({ status: 200, description: 'Page deleted successfully.' })
+  @ApiOperation({
+    summary: 'Delete a chapter and shift subsequent chapters down',
+  })
+  @ApiResponse({ status: 200, description: 'Chapter deleted successfully.' })
   async remove(
     @Param('clubSlug') clubSlug: string,
     @Param('bookId') bookId: string,
@@ -185,7 +209,7 @@ export class PagesController {
     @Req() req: AuthenticatedRequest,
   ) {
     const userStatus = this.getUserStatus(req);
-    return this.pagesService.remove(
+    return this.chaptersService.remove(
       clubSlug,
       bookId,
       Number(index),

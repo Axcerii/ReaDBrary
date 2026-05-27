@@ -1,54 +1,55 @@
-# ── 1. Base stage : Installation des dépendances ──────────────────────────────
+# ── 1. Base stage: Dependency Installation ──────────────────────────────
 FROM node:24-alpine AS base
 
 WORKDIR /usr/src/app
 
-# On copie uniquement les fichiers de gestion de paquets d'abord
+# Copy package management files first
 COPY package*.json ./
 
-# npm ci est préférable à npm install dans les CI/CD et Docker car il respecte 
-# strictement le package-lock.json (plus rapide et prédictible)
+# npm ci is preferred over npm install in CI/CD and Docker because it respects
+# strictly the package-lock.json (faster and more predictable)
 RUN npm ci
 
-# ── 2. Development stage : Utilisé par ton docker-compose ─────────────────────
+# ── 2. Development stage: Used by docker-compose ─────────────────────
 FROM base AS dev
 
-# Prisma a besoin de son schéma pour générer le client TS
+# Prisma needs its schema to generate the TS client
 COPY prisma ./prisma
 RUN npx prisma generate
 
-# Pas besoin de copier le code source, docker-compose le monte en volume !
+# No need to copy source code, docker-compose mounts it as a volume!
 EXPOSE 3000
 
-# Commande pour démarrer avec le hot-reloading
+# Command to start with hot-reloading
 CMD ["npm", "run", "start:dev"]
 
-# ── 3. Build stage : Compilation de l'application ─────────────────────────────
+# ── 3. Build stage: Compiling the application ─────────────────────────────
 FROM base AS builder
 
-# On copie tout le code source
+# Copy all source code
 COPY . .
 
-# On génère Prisma et on build l'app NestJS (crée le dossier /dist)
+# Generate Prisma client and build NestJS app (creates /dist folder)
 RUN npx prisma generate
 RUN npm run build
 
-# Optimisation critique : on supprime les devDependencies (Jest, TS, etc.)
-# pour ne garder que ce qui est nécessaire en production
+# Critical optimization: prune devDependencies (Jest, TS, etc.)
+# to keep only what is necessary in production
 RUN npm prune --production
 
-# ── 4. Production stage : Image finale ultra-légère ───────────────────────────
-FROM node:20-alpine AS prod
+# ── 4. Production stage: Lightweight production image ───────────────────────────
+FROM node:24-alpine AS prod
 
 WORKDIR /usr/src/app
 
-# On copie uniquement les artefacts générés et les dépendances propres
+# Copy only generated artifacts and production dependencies
 COPY --from=builder /usr/src/app/package*.json ./
 COPY --from=builder /usr/src/app/node_modules ./node_modules
 COPY --from=builder /usr/src/app/dist ./dist
 COPY --from=builder /usr/src/app/prisma ./prisma
+COPY --from=builder /usr/src/app/generated ./generated
 
 EXPOSE 3000
 
-# Commande pour démarrer la version compilée et optimisée
+# Command to start the compiled and optimized version
 CMD ["npm", "run", "start:prod"]

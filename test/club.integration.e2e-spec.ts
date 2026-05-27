@@ -227,7 +227,11 @@ describe('Clubs Module (e2e)', () => {
     it('should filter clubs by name (case insensitive)', async () => {
       await prisma.club.createMany({
         data: [
-          { name: 'NestJS Book Club', slug: 'nestjs-book-club', isActive: true },
+          {
+            name: 'NestJS Book Club',
+            slug: 'nestjs-book-club',
+            isActive: true,
+          },
           { name: 'React Readers', slug: 'react-readers', isActive: true },
           { name: 'Vue Enthusiasts', slug: 'vue-enthusiasts', isActive: true },
         ],

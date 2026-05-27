@@ -101,3 +101,48 @@ npm run test:e2e
 npm run test:cov
 ```
 *(Current code coverage is above 90% across the entire codebase).*
+
+---
+
+## 🌐 Production Deployment (VPS)
+
+To deploy BookShelf on a VPS using Docker:
+
+### 1. Build the Production Image
+From the root of the project, run the build using the `prod` target:
+```bash
+docker build --target prod -t readbrary-api:latest .
+```
+
+### 2. Configure Persistent Volumes
+Since uploaded images for chapters are stored in `/usr/src/app/uploads`, you **must** mount a persistent volume from the host VPS to prevent losing assets when the container restarts.
+
+### 3. Run Database Migrations
+Before launching the application container, run the database migrations on your production database:
+```bash
+docker run --rm \
+  -e DATABASE_URL="postgresql://user:password@db-host:5432/dbname" \
+  readbrary-api:latest \
+  npx prisma migrate deploy
+```
+
+### 4. Running via Docker Compose
+Here is an example `docker-compose.prod.yml` configuration:
+
+```yaml
+version: '3.8'
+
+services:
+  api:
+    image: readbrary-api:latest
+    container_name: readbrary-api-prod
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@db-host:5432/dbname
+      - BETTER_AUTH_SECRET=your_better_auth_secret
+      # ... other environment variables
+    volumes:
+      - /var/lib/readbrary/uploads:/usr/src/app/uploads
+```

@@ -12,7 +12,7 @@ export class ReviewsService {
 
   /**
    * Vérifie qu'un livre appartient à un club spécifique et valide sa visibilité (si actif ou si l'utilisateur est admin/owner).
-   * 
+   *
    * @param clubSlug Le slug du club de lecture
    * @param bookId L'identifiant du livre
    * @param userStatus Le statut d'accès de l'utilisateur demandeur
@@ -48,7 +48,7 @@ export class ReviewsService {
   /**
    * Crée un avis (critique / note) sur un livre de club.
    * L'utilisateur ne peut laisser qu'un seul avis par livre (contrainte d'unicité).
-   * 
+   *
    * @param clubSlug Le slug du club de lecture
    * @param bookId L'identifiant du livre
    * @param userId L'identifiant de l'utilisateur qui rédige l'avis
@@ -103,7 +103,7 @@ export class ReviewsService {
 
   /**
    * Récupère tous les avis déposés sur un livre donné.
-   * 
+   *
    * @param clubSlug Le slug du club de lecture
    * @param bookId L'identifiant du livre
    * @param userStatus Le statut d'accès de l'utilisateur demandeur

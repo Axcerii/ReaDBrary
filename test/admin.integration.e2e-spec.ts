@@ -324,7 +324,9 @@ second@example.com,INVALIDE`;
         .send({ csv });
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].error).toContain('rôle doit être OWNER, EDITOR ou READER');
+      expect(response.body.errors[0].error).toContain(
+        'rôle doit être OWNER, EDITOR ou READER',
+      );
 
       const member2 = await prisma.clubMember.findUnique({
         where: { userId_clubId: { userId: secondUser.id, clubId: club.id } },
@@ -363,8 +365,7 @@ second@example.com,INVALIDE`;
     it('should allow an administrator to delete a review', async () => {
       authenticateAs(adminUser);
 
-      const response = await apiRequest()
-        .delete(`/admin/reviews/${review.id}`);
+      const response = await apiRequest().delete(`/admin/reviews/${review.id}`);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -378,8 +379,7 @@ second@example.com,INVALIDE`;
     it('should deny access to unauthenticated users (401)', async () => {
       authenticateAs(null);
 
-      const response = await apiRequest()
-        .delete(`/admin/reviews/${review.id}`);
+      const response = await apiRequest().delete(`/admin/reviews/${review.id}`);
 
       expect(response.status).toBe(401);
 
@@ -393,8 +393,7 @@ second@example.com,INVALIDE`;
     it('should deny access to standard users (403)', async () => {
       authenticateAs(regularUser);
 
-      const response = await apiRequest()
-        .delete(`/admin/reviews/${review.id}`);
+      const response = await apiRequest().delete(`/admin/reviews/${review.id}`);
 
       expect(response.status).toBe(403);
 
@@ -408,11 +407,11 @@ second@example.com,INVALIDE`;
     it('should return 404 if the review does not exist', async () => {
       authenticateAs(adminUser);
 
-      const response = await apiRequest()
-        .delete('/admin/reviews/00000000-0000-0000-0000-000000000000');
+      const response = await apiRequest().delete(
+        '/admin/reviews/00000000-0000-0000-0000-000000000000',
+      );
 
       expect(response.status).toBe(404);
     });
   });
 });
-

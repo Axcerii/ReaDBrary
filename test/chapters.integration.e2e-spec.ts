@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
@@ -30,7 +31,7 @@ jest.mock('../src/auth/auth', () => ({
   },
 }));
 
-describe('Pages Module (e2e)', () => {
+describe('Chapters Module (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let club: Club;
@@ -38,8 +39,6 @@ describe('Pages Module (e2e)', () => {
   let ownerUser: User;
   let editorUser: User;
   let readerUser: User;
-  let nonMemberUser: User;
-  let adminUser: User;
   let tempFilePath: string;
 
   beforeAll(async () => {
@@ -90,16 +89,6 @@ describe('Pages Module (e2e)', () => {
     readerUser = await prisma.user.create({
       data: { email: 'reader@example.com', name: 'Reader User', role: 'USER' },
     });
-    nonMemberUser = await prisma.user.create({
-      data: {
-        email: 'stranger@example.com',
-        name: 'Stranger User',
-        role: 'USER',
-      },
-    });
-    adminUser = await prisma.user.create({
-      data: { email: 'admin@example.com', name: 'Admin User', role: 'ADMIN' },
-    });
 
     // Create club
     club = await prisma.club.create({
@@ -115,7 +104,7 @@ describe('Pages Module (e2e)', () => {
       ],
     });
 
-    // Create a book (initially 0 pages, will grow as pages are added)
+    // Create a book (initially 0 pages, will grow as chapters are added)
     book = await prisma.book.create({
       data: {
         title: 'Livre E2E',
@@ -127,86 +116,93 @@ describe('Pages Module (e2e)', () => {
     });
   });
 
-  describe('POST /clubs/:clubSlug/books/:bookId/pages', () => {
-    it('should allow an EDITOR or OWNER to create a page and shift subsequent ones', async () => {
+  describe('POST /clubs/:clubSlug/books/:bookId/chapters', () => {
+    it('should allow an EDITOR or OWNER to create a chapter and shift subsequent ones', async () => {
       mockSession = {
         user: { id: editorUser.id, email: editorUser.email, role: 'USER' },
       };
 
-      // 1. Create page 1
+      // 1. Create chapter 1 with 1 virtual page
       const res1 = await request(app.getHttpServer())
-        .post(`/clubs/${club.slug}/books/${book.id}/pages`)
+        .post(`/clubs/${club.slug}/books/${book.id}/chapters`)
         .send({
           index: 1,
-          title: 'Page 1',
-          text: 'Contenu 1',
+          title: 'Chapitre 1',
+          content: 'Contenu 1',
         })
         .expect(201);
 
       expect(res1.body.index).toBe(1);
-      expect(res1.body.title).toBe('Page 1');
+      expect(res1.body.title).toBe('Chapitre 1');
 
-      // 2. Create page 2 at end
+      // Verify book pages updated to 1
+      let updatedBook = await prisma.book.findUnique({
+        where: { id: book.id },
+      });
+      expect(updatedBook?.pages).toBe(1);
+
+      // 2. Create chapter 2 with 2 virtual pages (using --- delimiter)
       const res2 = await request(app.getHttpServer())
-        .post(`/clubs/${club.slug}/books/${book.id}/pages`)
+        .post(`/clubs/${club.slug}/books/${book.id}/chapters`)
         .send({
           index: 2,
-          title: 'Page 2',
-          text: 'Contenu 2',
+          title: 'Chapitre 2',
+          content: 'Partie A\n---\nPartie B',
         })
         .expect(201);
 
       expect(res2.body.index).toBe(2);
 
-      // Verify book pages updated to 2
-      let updatedBook = await prisma.book.findUnique({
+      // Verify book pages updated to 1 + 2 = 3
+      updatedBook = await prisma.book.findUnique({
         where: { id: book.id },
       });
-      expect(updatedBook?.pages).toBe(2);
+      expect(updatedBook?.pages).toBe(3);
 
-      // 3. Insert page at index 1 (should shift index 1->2, 2->3)
+      // 3. Insert chapter at index 1 (should shift index 1->2, 2->3)
       const res3 = await request(app.getHttpServer())
-        .post(`/clubs/${club.slug}/books/${book.id}/pages`)
+        .post(`/clubs/${club.slug}/books/${book.id}/chapters`)
         .send({
           index: 1,
-          title: 'Nouvelle Page 1',
-          text: 'Contenu Nouveau',
+          title: 'Nouveau Chapitre 1',
+          content: 'Nouveau Contenu\n<!-- pagebreak -->\nSeconde page', // 2 virtual pages
         })
         .expect(201);
 
       expect(res3.body.index).toBe(1);
 
-      // Check final pages in DB
-      const pages = await prisma.page.findMany({
+      // Check final chapters in DB
+      const chapters = await prisma.chapter.findMany({
         where: { bookId: book.id },
         orderBy: { index: 'asc' },
       });
 
-      expect(pages.length).toBe(3);
-      expect(pages[0].title).toBe('Nouvelle Page 1');
-      expect(pages[0].index).toBe(1);
+      expect(chapters.length).toBe(3);
+      expect(chapters[0].title).toBe('Nouveau Chapitre 1');
+      expect(chapters[0].index).toBe(1);
 
-      expect(pages[1].title).toBe('Page 1');
-      expect(pages[1].index).toBe(2);
+      expect(chapters[1].title).toBe('Chapitre 1');
+      expect(chapters[1].index).toBe(2);
 
-      expect(pages[2].title).toBe('Page 2');
-      expect(pages[2].index).toBe(3);
+      expect(chapters[2].title).toBe('Chapitre 2');
+      expect(chapters[2].index).toBe(3);
 
+      // Verify book pages updated to 2 (nouveau ch1) + 1 (ch1) + 2 (ch2) = 5
       updatedBook = await prisma.book.findUnique({ where: { id: book.id } });
-      expect(updatedBook?.pages).toBe(3);
+      expect(updatedBook?.pages).toBe(5);
     });
 
-    it('should forbid page creation for a READER', async () => {
+    it('should forbid chapter creation for a READER', async () => {
       mockSession = {
         user: { id: readerUser.id, email: readerUser.email, role: 'USER' },
       };
 
       await request(app.getHttpServer())
-        .post(`/clubs/${club.slug}/books/${book.id}/pages`)
+        .post(`/clubs/${club.slug}/books/${book.id}/chapters`)
         .send({
           index: 1,
-          title: 'Page 1',
-          text: 'Reader try',
+          title: 'Chapitre 1',
+          content: 'Reader try',
         })
         .expect(403);
     });
@@ -216,26 +212,26 @@ describe('Pages Module (e2e)', () => {
         user: { id: ownerUser.id, email: ownerUser.email, role: 'USER' },
       };
 
-      // Cannot create at index 2 since total pages is 0
+      // Cannot create at index 2 since total chapters is 0
       await request(app.getHttpServer())
-        .post(`/clubs/${club.slug}/books/${book.id}/pages`)
+        .post(`/clubs/${club.slug}/books/${book.id}/chapters`)
         .send({
           index: 2,
-          title: 'Page 2',
-          text: 'Contenu 2',
+          title: 'Chapitre 2',
+          content: 'Contenu 2',
         })
         .expect(400);
     });
   });
 
-  describe('POST /clubs/:clubSlug/books/:bookId/pages/upload', () => {
+  describe('POST /clubs/:clubSlug/books/:bookId/chapters/upload', () => {
     it('should allow uploading an image and return its URL', async () => {
       mockSession = {
         user: { id: editorUser.id, email: editorUser.email, role: 'USER' },
       };
 
       const res = await request(app.getHttpServer())
-        .post(`/clubs/${club.slug}/books/${book.id}/pages/upload`)
+        .post(`/clubs/${club.slug}/books/${book.id}/chapters/upload`)
         .attach('file', tempFilePath)
         .expect(201);
 
@@ -244,29 +240,23 @@ describe('Pages Module (e2e)', () => {
     });
   });
 
-  describe('GET /clubs/:clubSlug/books/:bookId/pages', () => {
-    it('should return pages with pagination', async () => {
+  describe('GET /clubs/:clubSlug/books/:bookId/chapters', () => {
+    it('should return chapters with pagination', async () => {
       mockSession = {
         user: { id: readerUser.id, email: readerUser.email, role: 'USER' },
       };
 
-      // Create 3 pages first
-      await prisma.page.createMany({
+      // Create 3 chapters first
+      await prisma.chapter.createMany({
         data: [
-          { bookId: book.id, index: 1, title: 'P1', text: 'T1' },
-          { bookId: book.id, index: 2, title: 'P2', text: 'T2' },
-          { bookId: book.id, index: 3, title: 'P3', text: 'T3' },
+          { bookId: book.id, index: 1, title: 'C1', content: 'T1' },
+          { bookId: book.id, index: 2, title: 'C2', content: 'T2' },
+          { bookId: book.id, index: 3, title: 'C3', content: 'T3' },
         ],
       });
 
-      // Update book count
-      await prisma.book.update({
-        where: { id: book.id },
-        data: { pages: 3 },
-      });
-
       const res = await request(app.getHttpServer())
-        .get(`/clubs/${club.slug}/books/${book.id}/pages`)
+        .get(`/clubs/${club.slug}/books/${book.id}/chapters`)
         .query({ page: 1, limit: 2 })
         .expect(200);
 
@@ -278,36 +268,41 @@ describe('Pages Module (e2e)', () => {
     });
   });
 
-  describe('GET /clubs/:clubSlug/books/:bookId/pages/:index', () => {
-    it('should return a specific page or 404 if absent', async () => {
+  describe('GET /clubs/:clubSlug/books/:bookId/chapters/:index', () => {
+    it('should return a specific chapter or 404 if absent', async () => {
       mockSession = {
         user: { id: readerUser.id, email: readerUser.email, role: 'USER' },
       };
 
-      await prisma.page.create({
-        data: { bookId: book.id, index: 1, title: 'Page 1', text: 'T1' },
+      await prisma.chapter.create({
+        data: { bookId: book.id, index: 1, title: 'Chapitre 1', content: 'T1' },
       });
 
       const res = await request(app.getHttpServer())
-        .get(`/clubs/${club.slug}/books/${book.id}/pages/1`)
+        .get(`/clubs/${club.slug}/books/${book.id}/chapters/1`)
         .expect(200);
 
-      expect(res.body.title).toBe('Page 1');
+      expect(res.body.title).toBe('Chapitre 1');
 
       await request(app.getHttpServer())
-        .get(`/clubs/${club.slug}/books/${book.id}/pages/2`)
+        .get(`/clubs/${club.slug}/books/${book.id}/chapters/2`)
         .expect(404);
     });
 
-    it('should hide pages of a deactivated book from standard members (404)', async () => {
+    it('should hide chapters of a deactivated book from standard members (404)', async () => {
       // Deactivate book
       await prisma.book.update({
         where: { id: book.id },
         data: { isActive: false },
       });
 
-      await prisma.page.create({
-        data: { bookId: book.id, index: 1, title: 'Page Secrete', text: 'T1' },
+      await prisma.chapter.create({
+        data: {
+          bookId: book.id,
+          index: 1,
+          title: 'Chapitre Secret',
+          content: 'T1',
+        },
       });
 
       // Readers get 404
@@ -315,7 +310,7 @@ describe('Pages Module (e2e)', () => {
         user: { id: readerUser.id, email: readerUser.email, role: 'USER' },
       };
       await request(app.getHttpServer())
-        .get(`/clubs/${club.slug}/books/${book.id}/pages/1`)
+        .get(`/clubs/${club.slug}/books/${book.id}/chapters/1`)
         .expect(404);
 
       // Owner can read it
@@ -323,92 +318,87 @@ describe('Pages Module (e2e)', () => {
         user: { id: ownerUser.id, email: ownerUser.email, role: 'USER' },
       };
       await request(app.getHttpServer())
-        .get(`/clubs/${club.slug}/books/${book.id}/pages/1`)
+        .get(`/clubs/${club.slug}/books/${book.id}/chapters/1`)
         .expect(200);
     });
   });
 
-  describe('PATCH /clubs/:clubSlug/books/:bookId/pages/:index', () => {
+  describe('PATCH /clubs/:clubSlug/books/:bookId/chapters/:index', () => {
     it('should allow modifying data and index (with shifting)', async () => {
       mockSession = {
         user: { id: ownerUser.id, email: ownerUser.email, role: 'USER' },
       };
 
-      await prisma.page.createMany({
+      await prisma.chapter.createMany({
         data: [
-          { bookId: book.id, index: 1, title: 'P1', text: 'T1' },
-          { bookId: book.id, index: 2, title: 'P2', text: 'T2' },
-          { bookId: book.id, index: 3, title: 'P3', text: 'T3' },
+          { bookId: book.id, index: 1, title: 'C1', content: 'T1' },
+          { bookId: book.id, index: 2, title: 'C2', content: 'T2' },
+          { bookId: book.id, index: 3, title: 'C3', content: 'T3' },
         ],
       });
 
-      // Update pages count
-      await prisma.book.update({
-        where: { id: book.id },
-        data: { pages: 3 },
-      });
-
-      // Move P2 (index 2) to index 1
+      // Move C2 (index 2) to index 1
       await request(app.getHttpServer())
-        .patch(`/clubs/${club.slug}/books/${book.id}/pages/2`)
+        .patch(`/clubs/${club.slug}/books/${book.id}/chapters/2`)
         .send({
           index: 1,
-          title: 'P2 Modifiée',
+          title: 'C2 Modifiée',
         })
         .expect(200);
 
-      const pages = await prisma.page.findMany({
+      const chapters = await prisma.chapter.findMany({
         where: { bookId: book.id },
         orderBy: { index: 'asc' },
       });
 
-      expect(pages[0].title).toBe('P2 Modifiée');
-      expect(pages[0].index).toBe(1);
+      expect(chapters[0].title).toBe('C2 Modifiée');
+      expect(chapters[0].index).toBe(1);
 
-      expect(pages[1].title).toBe('P1');
-      expect(pages[1].index).toBe(2);
+      expect(chapters[1].title).toBe('C1');
+      expect(chapters[1].index).toBe(2);
 
-      expect(pages[2].title).toBe('P3');
-      expect(pages[2].index).toBe(3);
+      expect(chapters[2].title).toBe('C3');
+      expect(chapters[2].index).toBe(3);
     });
   });
 
-  describe('DELETE /clubs/:clubSlug/books/:bookId/pages/:index', () => {
-    it('should delete a page and shift subsequent pages down', async () => {
+  describe('DELETE /clubs/:clubSlug/books/:bookId/chapters/:index', () => {
+    it('should delete a chapter and shift subsequent chapters down', async () => {
       mockSession = {
         user: { id: ownerUser.id, email: ownerUser.email, role: 'USER' },
       };
 
-      await prisma.page.createMany({
+      await prisma.chapter.createMany({
         data: [
-          { bookId: book.id, index: 1, title: 'P1', text: 'T1' },
-          { bookId: book.id, index: 2, title: 'P2', text: 'T2' },
-          { bookId: book.id, index: 3, title: 'P3', text: 'T3' },
+          { bookId: book.id, index: 1, title: 'C1', content: 'T1' },
+          { bookId: book.id, index: 2, title: 'C2', content: 'T2\n---\nT2.2' }, // 2 pages
+          { bookId: book.id, index: 3, title: 'C3', content: 'T3' },
         ],
       });
 
-      // Update pages count
+      // Set initial count
       await prisma.book.update({
         where: { id: book.id },
-        data: { pages: 3 },
+        data: { pages: 4 },
       });
 
       await request(app.getHttpServer())
-        .delete(`/clubs/${club.slug}/books/${book.id}/pages/2`)
+        .delete(`/clubs/${club.slug}/books/${book.id}/chapters/2`)
         .expect(200);
 
-      const pages = await prisma.page.findMany({
+      const chapters = await prisma.chapter.findMany({
         where: { bookId: book.id },
         orderBy: { index: 'asc' },
       });
 
-      expect(pages.length).toBe(2);
-      expect(pages[0].title).toBe('P1');
-      expect(pages[0].index).toBe(1);
+      expect(chapters.length).toBe(2);
+      expect(chapters[0].title).toBe('C1');
+      expect(chapters[0].index).toBe(1);
 
-      expect(pages[1].title).toBe('P3');
-      expect(pages[1].index).toBe(2);
+      expect(chapters[1].title).toBe('C3');
+      expect(chapters[1].index).toBe(2);
 
+      // Virtual pages are now C1 (1) + C3 (1) = 2
       const updatedBook = await prisma.book.findUnique({
         where: { id: book.id },
       });
@@ -417,26 +407,31 @@ describe('Pages Module (e2e)', () => {
   });
 
   describe('Integration Progression', () => {
-    it('should include currentPageDetails in the progression response', async () => {
+    it('should include currentPageDetails resolved virtually in the progression response', async () => {
       mockSession = {
         user: { id: readerUser.id, email: readerUser.email, role: 'USER' },
       };
 
-      // Create 2 pages
-      await prisma.page.createMany({
+      // Create 2 chapters
+      await prisma.chapter.createMany({
         data: [
-          { bookId: book.id, index: 1, title: 'Intro', text: 'C1' },
-          { bookId: book.id, index: 2, title: 'Chapitre 1', text: 'C2' },
+          { bookId: book.id, index: 1, title: 'Intro', content: 'C1' },
+          {
+            bookId: book.id,
+            index: 2,
+            title: 'Chapitre 1',
+            content: 'Partie A\n---\nPartie B',
+          }, // global page 2 & 3
         ],
       });
 
       // Update book count
       await prisma.book.update({
         where: { id: book.id },
-        data: { pages: 2 },
+        data: { pages: 3 },
       });
 
-      // Set user progression to page 2
+      // Set user progression to page 2 (first page of Chapter 1)
       await request(app.getHttpServer())
         .patch(`/clubs/${club.slug}/books/${book.id}/progression`)
         .send({ currentPage: 2 })
@@ -450,7 +445,7 @@ describe('Pages Module (e2e)', () => {
       expect(res.body.currentPage).toBe(2);
       expect(res.body.currentPageDetails).toBeDefined();
       expect(res.body.currentPageDetails.title).toBe('Chapitre 1');
-      expect(res.body.currentPageDetails.text).toBe('C2');
+      expect(res.body.currentPageDetails.text).toBe('Partie A');
     });
   });
 });

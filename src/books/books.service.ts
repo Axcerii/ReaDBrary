@@ -14,7 +14,7 @@ export class BooksService {
 
   /**
    * Récupère l'ID d'un club de lecture à partir de son slug.
-   * 
+   *
    * @param clubSlug Le slug unique du club
    * @throws NotFoundException Si le club n'est pas trouvé
    * @returns L'identifiant (ID) du club
@@ -24,14 +24,16 @@ export class BooksService {
       where: { slug: clubSlug },
     });
     if (!club) {
-      throw new NotFoundException(`Le club avec le slug "${clubSlug}" n'existe pas.`);
+      throw new NotFoundException(
+        `Le club avec le slug "${clubSlug}" n'existe pas.`,
+      );
     }
     return club.id;
   }
 
   /**
    * Crée un nouveau livre associé à un club de lecture.
-   * 
+   *
    * @param clubSlug Le slug du club auquel attacher le livre
    * @param createBookDto Les données du livre à créer
    * @returns Le livre créé avec averageRating initialisé à null
@@ -58,7 +60,7 @@ export class BooksService {
    * Calcule et injecte la note moyenne de chaque livre dans la réponse.
    * - Les membres READER et EDITOR ne voient que les livres actifs.
    * - Les OWNER et ADMIN globaux voient également les livres inactifs.
-   * 
+   *
    * @param clubSlug Le slug du club de lecture
    * @param query Les filtres optionnels (titre, auteur, genre) et pagination (page, limite)
    * @param userStatus Le statut/rôle de l'utilisateur demandeur
@@ -123,7 +125,7 @@ export class BooksService {
   /**
    * Récupère un livre spécifique par son identifiant.
    * Calcule et renvoie la note moyenne calculée sur l'ensemble des revues de ce livre.
-   * 
+   *
    * @param clubSlug Le slug du club de lecture
    * @param id L'identifiant du livre
    * @param userStatus Le statut/rôle de l'utilisateur demandeur
@@ -171,7 +173,7 @@ export class BooksService {
   /**
    * Modifie les informations d'un livre existant.
    * Seuls les administrateurs globaux et propriétaires de club ont le droit d'activer/désactiver un livre.
-   * 
+   *
    * @param clubSlug Le slug du club de lecture
    * @param id L'identifiant du livre
    * @param updateBookDto Les modifications à appliquer
@@ -208,7 +210,7 @@ export class BooksService {
 
   /**
    * Supprime un livre d'un club de lecture.
-   * 
+   *
    * @param clubSlug Le slug du club de lecture
    * @param id L'identifiant du livre à supprimer
    * @param userStatus Le statut/rôle de l'utilisateur demandeur
@@ -229,7 +231,7 @@ export class BooksService {
   /**
    * Exporte l'ensemble de la bibliothèque d'un club sous format CSV.
    * Applique le filtrage de visibilité (les livres inactifs sont masqués aux membres normaux).
-   * 
+   *
    * @param clubSlug Le slug du club de lecture
    * @param userStatus Le statut/rôle de l'utilisateur demandeur
    * @returns Le contenu textuel brut du fichier CSV généré

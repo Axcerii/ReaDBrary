@@ -13,13 +13,21 @@ const adapter = new PrismaPg({
 const prisma = new PrismaClient({ adapter });
 
 export const auth = betterAuth({
+  database: prismaAdapter(prisma, {
+    provider: 'postgresql',
+  }),
   emailAndPassword: {
     enabled: true,
   },
-  database: prismaAdapter(prisma, {
-    provider: 'postgresql', // or "mysql", "postgresql", ...etc
-  }),
+  secret: process.env.BETTER_AUTH_SECRET,
+  baseURL: process.env.BETTER_AUTH_URL,
   advanced: {
     disableOriginCheck: true,
+  },
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID || 'placeholder-google-client-id',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'placeholder-google-client-secret',
+    },
   },
 });

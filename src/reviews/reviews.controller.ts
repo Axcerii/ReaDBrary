@@ -14,7 +14,12 @@ import { ClubRolesGuard } from '../auth/guards/club-roles.guard';
 import { ClubRoles } from '../auth/decorators/club-roles.decorator';
 import { ClubRole } from '../../generated/prisma/client';
 import { Request } from 'express';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 
 interface BetterAuthSession {
   user: {
@@ -48,7 +53,10 @@ export class ReviewsController {
   @Post()
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR, ClubRole.READER)
   @ApiOperation({ summary: 'Create or update a review on a book' })
-  @ApiResponse({ status: 201, description: 'Review created or updated successfully.' })
+  @ApiResponse({
+    status: 201,
+    description: 'Review created or updated successfully.',
+  })
   async create(
     @Param('clubSlug') clubSlug: string,
     @Param('bookId') bookId: string,

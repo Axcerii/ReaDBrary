@@ -130,23 +130,23 @@ ReaDBrary tests are split into two main categories:
 
 ---
 
-### 📄 7. [Book Pages Tests](file:///c:/Users/rydra/Documents/ReaDBrary/test/pages.integration.e2e-spec.ts)
-* **Suite Name**: `Pages Module (e2e)`
-* **Description**: Verifies creation, ordering, updating, deleting, image upload, and index shifting of book pages.
+### 📄 7. [Book Chapters Tests](file:///c:/Users/rydra/Documents/ReaDBrary/test/chapters.integration.e2e-spec.ts)
+* **Suite Name**: `Chapters Module (e2e)`
+* **Description**: Verifies creation, ordering, updating, deleting, image upload, and index shifting of book chapters.
 
 | HTTP Method & Route | Test Scenario | Expected Result | Status |
 | :--- | :--- | :--- | :---: |
-| `POST /clubs/:clubSlug/books/:bookId/pages` | Create page - Editor / Owner | Status `201`, page created |  |
-| `POST /clubs/:clubSlug/books/:bookId/pages` | Insert page causing index shift | Status `201`, subsequent pages shifted up (e.g. `1➔2`, `2➔3`) |  |
-| `POST /clubs/:clubSlug/books/:bookId/pages` | Create page - Reader | Status `403 Forbidden` |  |
-| `POST /clubs/:clubSlug/books/:bookId/pages` | Create page with out-of-bounds index | Status `400 Bad Request` |  |
-| `POST /clubs/.../pages/upload` | Upload page image file | Status `201`, uploads file and returns its URL path |  |
-| `GET /clubs/:clubSlug/books/:bookId/pages` | List pages with pagination | Status `200`, returns paginated pages list and metadata |  |
-| `GET /clubs/:clubSlug/books/:bookId/pages/:index` | Get specific page by index | Status `200` if exists, `404` if index doesn't exist |  |
-| `GET /clubs/:clubSlug/books/:bookId/pages/:index` | Get page of deactivated book | `Reader` receives `404`; `Owner` receives `200` |  |
-| `PATCH /clubs/:clubSlug/books/:bookId/pages/:index` | Update page index (with shifting) | Status `200`, updates text and shifts other pages' indices |  |
-| `DELETE /clubs/:clubSlug/books/:bookId/pages/:index` | Delete page and shift subsequent down | Status `200`, page deleted, other page indices decremented |  |
-| `GET /clubs/:clubSlug/books/:bookId/progression` | Get progression with page details | Progression payload includes `currentPageDetails` object |  |
+| `POST /clubs/:clubSlug/books/:bookId/chapters` | Create chapter - Editor / Owner | Status `201`, chapter created |  |
+| `POST /clubs/:clubSlug/books/:bookId/chapters` | Insert chapter causing index shift | Status `201`, subsequent chapters shifted up (e.g. `1➔2`, `2➔3`) |  |
+| `POST /clubs/:clubSlug/books/:bookId/chapters` | Create chapter - Reader | Status `403 Forbidden` |  |
+| `POST /clubs/:clubSlug/books/:bookId/chapters` | Create chapter with out-of-bounds index | Status `400 Bad Request` |  |
+| `POST /clubs/.../chapters/upload` | Upload chapter image file | Status `201`, uploads file and returns its URL path |  |
+| `GET /clubs/:clubSlug/books/:bookId/chapters` | List chapters with pagination | Status `200`, returns paginated chapters list and metadata |  |
+| `GET /clubs/:clubSlug/books/:bookId/chapters/:index` | Get specific chapter by index | Status `200` if exists, `404` if index doesn't exist |  |
+| `GET /clubs/:clubSlug/books/:bookId/chapters/:index` | Get chapter of deactivated book | `Reader` receives `404`; `Owner` receives `200` |  |
+| `PATCH /clubs/:clubSlug/books/:bookId/chapters/:index` | Update chapter index (with shifting) | Status `200`, updates text/content and shifts other chapters' indices |  |
+| `DELETE /clubs/:clubSlug/books/:bookId/chapters/:index` | Delete chapter and shift subsequent down | Status `200`, chapter deleted, other chapter indices decremented |  |
+| `GET /clubs/:clubSlug/books/:bookId/progression` | Get progression with virtual page details | Progression payload includes `currentPageDetails` object resolved virtually |  |
 
 ---
 

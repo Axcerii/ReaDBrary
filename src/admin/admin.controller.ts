@@ -10,7 +10,12 @@ import {
 import { AdminService } from './admin.service';
 import { AdminGuard } from '../auth/guards/admin.guard';
 import { ImportCsvDto } from './dto/import-csv.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 
 @ApiTags('Administration')
 @ApiBearerAuth()
@@ -21,7 +26,10 @@ export class AdminController {
 
   @Get('users')
   @ApiOperation({ summary: 'List all users on the platform' })
-  @ApiResponse({ status: 200, description: 'List of users returned successfully.' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of users returned successfully.',
+  })
   async listUsers() {
     return this.adminService.listUsers();
   }

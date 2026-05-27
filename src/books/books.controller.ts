@@ -20,7 +20,12 @@ import { ClubRoles } from '../auth/decorators/club-roles.decorator';
 import { ClubRole } from '../../generated/prisma/client';
 import type { Response, Request } from 'express';
 
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 
 interface BetterAuthSession {
   user: {
@@ -65,7 +70,10 @@ export class BooksController {
   @Get()
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR, ClubRole.READER)
   @ApiOperation({ summary: 'List books of a club with filters and pagination' })
-  @ApiResponse({ status: 200, description: 'List of books returned successfully.' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of books returned successfully.',
+  })
   async findAll(
     @Param('clubSlug') clubSlug: string,
     @Query() query: BookQueryDto,
@@ -110,9 +118,14 @@ export class BooksController {
 
   @Patch(':id')
   @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR)
-  @ApiOperation({ summary: 'Update a book (modify its properties or activity status)' })
+  @ApiOperation({
+    summary: 'Update a book (modify its properties or activity status)',
+  })
   @ApiResponse({ status: 200, description: 'Book updated successfully.' })
-  @ApiResponse({ status: 403, description: 'Forbidden for an EDITOR to modify isActive.' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden for an EDITOR to modify isActive.',
+  })
   async update(
     @Param('clubSlug') clubSlug: string,
     @Param('id') id: string,
