@@ -4,6 +4,7 @@ import {
   IsEmail,
   IsOptional,
   MinLength,
+  Matches,
 } from 'class-validator';
 
 export class SignUpEmailDto {
@@ -13,7 +14,14 @@ export class SignUpEmailDto {
 
   @IsString()
   @IsNotEmpty({ message: 'Le mot de passe est obligatoire' })
-  @MinLength(6, { message: 'Le mot de passe doit faire au moins 6 caractères' })
+  @MinLength(12, { message: 'Le mot de passe doit faire au moins 12 caractères' })
+  @Matches(
+    /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+={}\[\]|\\:;"'<>,.?/~`\-]).{12,}$/,
+    {
+      message:
+        'Le mot de passe doit contenir au moins 12 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.',
+    },
+  )
   password: string;
 
   @IsString()
