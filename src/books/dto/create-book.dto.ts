@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsInt, Min } from 'class-validator';
+import { IsString, IsNotEmpty, IsInt, Min, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateBookDto {
@@ -14,8 +14,9 @@ export class CreateBookDto {
   @IsNotEmpty({ message: 'Le genre est obligatoire' })
   genre: string;
 
+  @IsOptional()
   @IsInt({ message: 'Le nombre de pages doit être un entier' })
   @Min(1, { message: 'Le nombre de pages doit être supérieur à 0' })
   @Type(() => Number)
-  pages: number;
+  pages?: number;
 }

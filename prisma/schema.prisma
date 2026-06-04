@@ -41,6 +41,7 @@ model User {
   accounts      Account[]
   reviews       Review[]
   progressions  Progression[]
+  chapterReads  ChapterRead[]
 
   @@map("user")
 }
@@ -60,7 +61,7 @@ model Book {
   title     String
   author    String
   genre     String
-  pages     Int
+  pages     Int      @default(0)
   isActive  Boolean  @default(true)
   clubId    String
   club      Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
@@ -69,6 +70,7 @@ model Book {
   reviews      Review[]
   progressions Progression[]
   chapters     Chapter[]
+  chapterReads ChapterRead[]
 }
 
 model ClubMember {
@@ -169,6 +171,22 @@ model Chapter {
   book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  chapterReads ChapterRead[]
 
   @@unique([bookId, index])
+}
+
+model ChapterRead {
+  id        String   @id @default(uuid())
+  userId    String
+  chapterId String
+  bookId    String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chapter Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  book    Book    @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, chapterId])
+  @@index([userId, bookId])
 }

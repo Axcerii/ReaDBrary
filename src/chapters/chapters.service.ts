@@ -143,6 +143,7 @@ export class ChaptersService {
     bookId: string,
     query: { page?: number; limit?: number },
     userStatus: { isAdmin: boolean; isOwner: boolean },
+    userId?: string,
   ) {
     const clubId = await this.getClubIdBySlug(clubSlug);
     await this.findBookInClub(clubId, bookId, userStatus);
@@ -162,8 +163,21 @@ export class ChaptersService {
       take: limit,
     });
 
+    const readChapters = userId
+      ? await this.prisma.chapterRead.findMany({
+          where: { userId, bookId },
+          select: { chapterId: true },
+        })
+      : [];
+    const readSet = new Set(readChapters.map((rc) => rc.chapterId));
+
+    const chaptersWithRead = chapters.map((chapter) => ({
+      ...chapter,
+      isRead: userId ? readSet.has(chapter.id) : false,
+    }));
+
     return {
-      data: chapters,
+      data: chaptersWithRead,
       meta: {
         total,
         page,
@@ -181,6 +195,7 @@ export class ChaptersService {
     bookId: string,
     index: number,
     userStatus: { isAdmin: boolean; isOwner: boolean },
+    userId?: string,
   ) {
     const clubId = await this.getClubIdBySlug(clubSlug);
     await this.findBookInClub(clubId, bookId, userStatus);
@@ -200,7 +215,111 @@ export class ChaptersService {
       );
     }
 
-    return chapter;
+    const isRead = userId
+      ? await this.prisma.chapterRead
+          .findUnique({
+            where: {
+              userId_chapterId: {
+                userId,
+                chapterId: chapter.id,
+              },
+            },
+          })
+          .then(Boolean)
+      : false;
+
+    return {
+      ...chapter,
+      isRead,
+    };
+  }
+
+  /**
+   * Marque ou démarque un chapitre comme lu et recalcule la progression automatiquement.
+   */
+  async toggleRead(
+    clubSlug: string,
+    bookId: string,
+    index: number,
+    userId: string,
+    read: boolean,
+    userStatus: { isAdmin: boolean; isOwner: boolean },
+  ) {
+    const clubId = await this.getClubIdBySlug(clubSlug);
+    await this.findBookInClub(clubId, bookId, userStatus);
+    const chapter = await this.prisma.chapter.findUnique({
+      where: {
+        bookId_index: {
+          bookId,
+          index,
+        },
+      },
+    });
+
+    if (!chapter) {
+      throw new NotFoundException(
+        `Le chapitre à l'index ${index} n'existe pas.`,
+      );
+    }
+
+    if (read) {
+      await this.prisma.chapterRead.upsert({
+        where: {
+          userId_chapterId: {
+            userId,
+            chapterId: chapter.id,
+          },
+        },
+        create: {
+          userId,
+          chapterId: chapter.id,
+          bookId,
+        },
+        update: {},
+      });
+    } else {
+      await this.prisma.chapterRead.deleteMany({
+        where: {
+          userId,
+          chapterId: chapter.id,
+        },
+      });
+    }
+
+    const totalChapters = await this.prisma.chapter.count({
+      where: { bookId },
+    });
+
+    const readChaptersCount = await this.prisma.chapterRead.count({
+      where: { userId, bookId },
+    });
+
+    await this.prisma.progression.upsert({
+      where: {
+        userId_bookId: {
+          userId,
+          bookId,
+        },
+      },
+      update: {
+        currentPage: readChaptersCount,
+      },
+      create: {
+        userId,
+        bookId,
+        currentPage: readChaptersCount,
+      },
+    });
+
+    return {
+      chapterId: chapter.id,
+      index: chapter.index,
+      isRead: read,
+      currentPage: readChaptersCount,
+      totalChapters,
+      progressPercentage:
+        totalChapters > 0 ? Math.round((readChaptersCount / totalChapters) * 100) : 0,
+    };
   }
 
   /**
