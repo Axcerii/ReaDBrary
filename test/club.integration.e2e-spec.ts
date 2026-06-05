@@ -75,6 +75,19 @@ describe('Clubs Module (e2e)', () => {
   });
 
   describe('POST /clubs', () => {
+    let testUser: User;
+
+    beforeEach(async () => {
+      testUser = await prisma.user.create({
+        data: {
+          email: 'creator@test.com',
+          name: 'Creator',
+          role: 'USER',
+        },
+      });
+      authenticateAs(testUser);
+    });
+
     it('should create a club with a specified slug', async () => {
       const payload = {
         name: 'Club Spécifié',

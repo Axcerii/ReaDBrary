@@ -41,14 +41,26 @@ export class ClubsService {
    * @throws ConflictException Si le slug est déjà utilisé
    * @returns Le club créé
    */
-  async create(createClubDto: CreateClubDto) {
+  async create(createClubDto: CreateClubDto, creatorUserId: string) {
     const slug = this.slugify(createClubDto.slug || createClubDto.name);
     try {
-      return await this.prisma.club.create({
-        data: {
-          name: createClubDto.name,
-          slug,
-        },
+      return await this.prisma.$transaction(async (tx) => {
+        const club = await tx.club.create({
+          data: {
+            name: createClubDto.name,
+            slug,
+          },
+        });
+
+        await tx.clubMember.create({
+          data: {
+            clubId: club.id,
+            userId: creatorUserId,
+            role: 'OWNER',
+          },
+        });
+
+        return club;
       });
     } catch (error: any) {
       if (error.code === 'P2002') {

@@ -119,9 +119,14 @@ export class ProgressionService {
     const clubId = await this.getClubIdBySlug(clubSlug);
     const book = await this.findBookInClub(clubId, bookId, userStatus);
 
-    if (updateDto.currentPage > book.pages) {
+    const totalChapters = await this.prisma.chapter.count({
+      where: { bookId },
+    });
+    const totalCount = totalChapters > 0 ? totalChapters : book.pages;
+
+    if (updateDto.currentPage > totalCount) {
       throw new BadRequestException(
-        `La page courante (${updateDto.currentPage}) ne peut pas dépasser le nombre total de pages du livre (${book.pages}).`,
+        `Le chapitre ou la page courante (${updateDto.currentPage}) ne peut pas dépasser le nombre total (${totalCount}).`,
       );
     }
 
@@ -143,8 +148,8 @@ export class ProgressionService {
     });
 
     const progressPercentage =
-      book.pages > 0
-        ? Math.round((progression.currentPage / book.pages) * 100)
+      totalCount > 0
+        ? Math.round((progression.currentPage / totalCount) * 100)
         : 0;
 
     const pageDetails = await this.resolveVirtualPageDetails(
@@ -187,9 +192,13 @@ export class ProgressionService {
       },
     });
 
+    const totalChapters = await this.prisma.chapter.count({
+      where: { bookId },
+    });
+    const totalCount = totalChapters > 0 ? totalChapters : book.pages;
     const currentPage = progression ? progression.currentPage : 0;
     const progressPercentage =
-      book.pages > 0 ? Math.round((currentPage / book.pages) * 100) : 0;
+      totalCount > 0 ? Math.round((currentPage / totalCount) * 100) : 0;
 
     const pageDetails =
       currentPage > 0
@@ -250,16 +259,21 @@ export class ProgressionService {
       where: { bookId },
     });
 
-    const progressionMap = new Map<string, Progression>();
+    const progressionMap = new Map<string, any>();
     for (const p of progressions) {
       progressionMap.set(p.userId, p);
     }
+
+    const totalChapters = await this.prisma.chapter.count({
+      where: { bookId },
+    });
+    const totalCount = totalChapters > 0 ? totalChapters : book.pages;
 
     return members.map((member) => {
       const p = progressionMap.get(member.userId);
       const currentPage = p ? p.currentPage : 0;
       const progressPercentage =
-        book.pages > 0 ? Math.round((currentPage / book.pages) * 100) : 0;
+        totalCount > 0 ? Math.round((currentPage / totalCount) * 100) : 0;
 
       return {
         userId: member.userId,

@@ -10,7 +10,12 @@ async function bootstrap() {
     bodyParser: false, // Required for Better Auth
   });
 
-  const uploadsDir = path.join(__dirname, '..', 'uploads');
+  app.enableCors({
+    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+    credentials: true,
+  });
+
+  const uploadsDir = path.join(process.cwd(), 'uploads');
   if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
   }

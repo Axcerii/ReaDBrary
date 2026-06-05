@@ -16,6 +16,19 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 
   async onModuleInit() {
     await this.$connect();
+
+    if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
+      try {
+        const userCount = await this.user.count();
+        if (userCount === 0) {
+          console.log('📡 No users found in database. Auto-seeding initial development data...');
+          const { seed } = await import('./seed');
+          await seed(this);
+        }
+      } catch (error) {
+        console.error('⚠️ Failed to run auto-seeding:', error);
+      }
+    }
   }
 
   async onModuleDestroy() {
@@ -23,6 +36,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   }
 
   async cleanDatabase() {
+    await this.chapterRead.deleteMany();
     await this.progression.deleteMany();
     await this.review.deleteMany();
     await this.chapter.deleteMany();

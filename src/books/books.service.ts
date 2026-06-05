@@ -45,7 +45,7 @@ export class BooksService {
         title: createBookDto.title,
         author: createBookDto.author,
         genre: createBookDto.genre,
-        pages: createBookDto.pages,
+        pages: createBookDto.pages ?? 0,
         clubId,
       },
     });

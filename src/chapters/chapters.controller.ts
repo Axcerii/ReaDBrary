@@ -12,10 +12,12 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ChaptersService } from './chapters.service';
 import { CreateChapterDto } from './dto/create-chapter.dto';
 import { UpdateChapterDto } from './dto/update-chapter.dto';
+import { UpdateChapterReadDto } from './dto/update-chapter-read.dto';
 import { ClubRolesGuard } from '../auth/guards/club-roles.guard';
 import { ClubRoles } from '../auth/decorators/club-roles.decorator';
 import { ClubRole } from '../../generated/prisma/client';
@@ -144,11 +146,13 @@ export class ChaptersController {
     const userStatus = this.getUserStatus(req);
     const pageNum = page ? Number(page) : undefined;
     const limitNum = limit ? Number(limit) : undefined;
+    const userId = req.userSession?.user?.id;
     return this.chaptersService.findAll(
       clubSlug,
       bookId,
       { page: pageNum, limit: limitNum },
       userStatus,
+      userId,
     );
   }
 
@@ -164,10 +168,38 @@ export class ChaptersController {
     @Req() req: AuthenticatedRequest,
   ) {
     const userStatus = this.getUserStatus(req);
+    const userId = req.userSession?.user?.id;
     return this.chaptersService.findOne(
       clubSlug,
       bookId,
       Number(index),
+      userStatus,
+      userId,
+    );
+  }
+
+  @Patch(':index/read')
+  @ClubRoles(ClubRole.OWNER, ClubRole.EDITOR, ClubRole.READER)
+  @ApiOperation({ summary: 'Toggle chapter read state' })
+  @ApiResponse({ status: 200, description: 'Chapter read state updated successfully.' })
+  async toggleRead(
+    @Param('clubSlug') clubSlug: string,
+    @Param('bookId') bookId: string,
+    @Param('index') index: string,
+    @Body() updateChapterReadDto: UpdateChapterReadDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const userId = req.userSession?.user?.id;
+    if (!userId) {
+      throw new UnauthorizedException('Non authentifié');
+    }
+    const userStatus = this.getUserStatus(req);
+    return this.chaptersService.toggleRead(
+      clubSlug,
+      bookId,
+      Number(index),
+      userId,
+      updateChapterReadDto.read,
       userStatus,
     );
   }

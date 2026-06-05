@@ -8,6 +8,7 @@ import {
   Delete,
   Req,
   Query,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ClubsService } from './clubs.service';
 import { CreateClubDto } from './dto/create-club.dto';
@@ -53,8 +54,14 @@ export class ClubsController {
   @Post()
   @ApiOperation({ summary: 'Create a new book club' })
   @ApiResponse({ status: 201, description: 'Club created successfully.' })
-  async create(@Body() createClubDto: CreateClubDto) {
-    return this.clubsService.create(createClubDto);
+  async create(@Body() createClubDto: CreateClubDto, @Req() req: Request) {
+    const sessionUser = await this.getSessionUser(req);
+    if (!sessionUser) {
+      throw new UnauthorizedException(
+        'Vous devez être connecté pour fonder un cercle.',
+      );
+    }
+    return this.clubsService.create(createClubDto, sessionUser.id);
   }
 
   @Get()
