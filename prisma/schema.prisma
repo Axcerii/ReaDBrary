@@ -33,6 +33,7 @@ model User {
   isActive Boolean @default(true)
 
   clubs         ClubMember[]
+  joinRequests  ClubJoinRequest[]
   emailVerified Boolean      @default(false)
   image         String?
   createdAt     DateTime     @default(now())
@@ -51,9 +52,11 @@ model Club {
   name String
   slug String @unique
   isActive Boolean @default(true)
+  isPublic Boolean @default(true)
 
   members ClubMember[]
   books   Book[]
+  joinRequests ClubJoinRequest[]
 }
 
 model Book {
@@ -189,4 +192,16 @@ model ChapterRead {
 
   @@unique([userId, chapterId])
   @@index([userId, bookId])
+}
+
+model ClubJoinRequest {
+  id        String   @id @default(uuid())
+  userId    String
+  clubId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  club Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, clubId])
 }

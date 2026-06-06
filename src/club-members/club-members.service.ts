@@ -2,6 +2,7 @@ import {
   Injectable,
   ConflictException,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AddMemberDto } from './dto/add-member.dto';
@@ -41,23 +42,39 @@ export class ClubMembersService {
    * @returns La relation de membre créée avec les détails de l'utilisateur
    */
   async addMember(clubSlug: string, addMemberDto: AddMemberDto) {
-    const { userId, role } = addMemberDto;
+    const { userId, email, role } = addMemberDto;
     const clubId = await this.getClubIdBySlug(clubSlug);
 
     // 1. Check if user exists
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-    });
-    if (!user) {
-      throw new NotFoundException(
-        `L'utilisateur avec l'ID "${userId}" n'existe pas.`,
+    let user;
+    if (userId) {
+      user = await this.prisma.user.findUnique({
+        where: { id: userId },
+      });
+      if (!user) {
+        throw new NotFoundException(
+          `L'utilisateur avec l'ID "${userId}" n'existe pas.`,
+        );
+      }
+    } else if (email) {
+      user = await this.prisma.user.findUnique({
+        where: { email },
+      });
+      if (!user) {
+        throw new NotFoundException(
+          `L'utilisateur avec l'adresse email "${email}" n'existe pas.`,
+        );
+      }
+    } else {
+      throw new BadRequestException(
+        "L'identifiant de l'utilisateur (userId) ou son email est obligatoire.",
       );
     }
 
     // 2. Check if already a member
     const existingMembership = await this.prisma.clubMember.findUnique({
       where: {
-        userId_clubId: { userId, clubId },
+        userId_clubId: { userId: user.id, clubId },
       },
     });
     if (existingMembership) {
@@ -68,7 +85,7 @@ export class ClubMembersService {
     return this.prisma.clubMember.create({
       data: {
         clubId,
-        userId,
+        userId: user.id,
         role: role ?? 'READER',
       },
       include: {
@@ -174,5 +191,190 @@ export class ClubMembersService {
         },
       },
     });
+  }
+
+  /**
+   * Permet à un utilisateur de rejoindre directement un club public
+   * ou de faire une demande d'adhésion pour un club privé.
+   */
+  async joinClub(clubSlug: string, userId: string) {
+    const club = await this.prisma.club.findUnique({
+      where: { slug: clubSlug },
+    });
+    if (!club) {
+      throw new NotFoundException(`Le club avec le slug "${clubSlug}" n'existe pas.`);
+    }
+
+    // Check if already a member
+    const existingMembership = await this.prisma.clubMember.findUnique({
+      where: {
+        userId_clubId: { userId, clubId: club.id },
+      },
+    });
+    if (existingMembership) {
+      throw new ConflictException('Vous êtes déjà membre de ce cercle de lecture.');
+    }
+
+    if (club.isPublic) {
+      // Public club: join instantly as READER
+      const membership = await this.prisma.clubMember.create({
+        data: {
+          clubId: club.id,
+          userId,
+          role: 'READER',
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      });
+      return { status: 'JOINED', membership };
+    } else {
+      // Private club: check if request already exists
+      const existingRequest = await this.prisma.clubJoinRequest.findUnique({
+        where: {
+          userId_clubId: { userId, clubId: club.id },
+        },
+      });
+      if (existingRequest) {
+        return { status: 'PENDING' };
+      }
+
+      await this.prisma.clubJoinRequest.create({
+        data: {
+          clubId: club.id,
+          userId,
+        },
+      });
+      return { status: 'PENDING' };
+    }
+  }
+
+  /**
+   * Récupère le statut d'adhésion d'un utilisateur par rapport à un club.
+   */
+  async getJoinStatus(clubSlug: string, userId: string) {
+    const club = await this.prisma.club.findUnique({
+      where: { slug: clubSlug },
+    });
+    if (!club) {
+      throw new NotFoundException(`Le club avec le slug "${clubSlug}" n'existe pas.`);
+    }
+
+    const membership = await this.prisma.clubMember.findUnique({
+      where: {
+        userId_clubId: { userId, clubId: club.id },
+      },
+    });
+
+    if (membership) {
+      return { isMember: true, role: membership.role, hasPendingRequest: false };
+    }
+
+    const pendingRequest = await this.prisma.clubJoinRequest.findUnique({
+      where: {
+        userId_clubId: { userId, clubId: club.id },
+      },
+    });
+
+    return {
+      isMember: false,
+      role: null,
+      hasPendingRequest: !!pendingRequest,
+    };
+  }
+
+  /**
+   * Liste les demandes d'adhésion en attente pour un club (pour OWNER ou ADMIN).
+   */
+  async findJoinRequests(clubSlug: string) {
+    const clubId = await this.getClubIdBySlug(clubSlug);
+
+    return this.prisma.clubJoinRequest.findMany({
+      where: { clubId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /**
+   * Approuve une demande d'adhésion (ajoute le membre et supprime la demande).
+   */
+  async approveJoinRequest(clubSlug: string, userId: string) {
+    const clubId = await this.getClubIdBySlug(clubSlug);
+
+    const request = await this.prisma.clubJoinRequest.findUnique({
+      where: {
+        userId_clubId: { userId, clubId },
+      },
+    });
+    if (!request) {
+      throw new NotFoundException("La demande d'adhésion n'existe pas.");
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      // Remove request
+      await tx.clubJoinRequest.delete({
+        where: {
+          userId_clubId: { userId, clubId },
+        },
+      });
+
+      // Add as READER member
+      return tx.clubMember.create({
+        data: {
+          clubId,
+          userId,
+          role: 'READER',
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      });
+    });
+  }
+
+  /**
+   * Refuse et supprime une demande d'adhésion.
+   */
+  async rejectJoinRequest(clubSlug: string, userId: string) {
+    const clubId = await this.getClubIdBySlug(clubSlug);
+
+    const request = await this.prisma.clubJoinRequest.findUnique({
+      where: {
+        userId_clubId: { userId, clubId },
+      },
+    });
+    if (!request) {
+      throw new NotFoundException("La demande d'adhésion n'existe pas.");
+    }
+
+    await this.prisma.clubJoinRequest.delete({
+      where: {
+        userId_clubId: { userId, clubId },
+      },
+    });
+
+    return { success: true };
   }
 }
