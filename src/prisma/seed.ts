@@ -68,6 +68,7 @@ export async function seed(prismaInstance?: any) {
       name: 'Le Club des Classiques',
       slug: 'le-club-des-classiques',
       isActive: true,
+      isPublic: true,
     },
   });
 
@@ -76,6 +77,7 @@ export async function seed(prismaInstance?: any) {
       name: 'Science-Fiction & Fantasy',
       slug: 'science-fiction-fantasy',
       isActive: true,
+      isPublic: true,
     },
   });
 
@@ -84,6 +86,16 @@ export async function seed(prismaInstance?: any) {
       name: 'Club Privé Inactif',
       slug: 'club-prive-inactif',
       isActive: false,
+      isPublic: false,
+    },
+  });
+
+  const clubSecret = await db.club.create({
+    data: {
+      name: 'Cercle de l’Ombre',
+      slug: 'cercle-de-l-ombre',
+      isActive: true,
+      isPublic: false,
     },
   });
 
@@ -115,6 +127,20 @@ export async function seed(prismaInstance?: any) {
       { clubId: clubInactif.id, userId: createdUsers['owner@readbrary.com'].id, role: 'OWNER' },
       { clubId: clubInactif.id, userId: createdUsers['reader1@readbrary.com'].id, role: 'READER' },
     ],
+  });
+
+  // Secret Club
+  await db.clubMember.create({
+    data: { clubId: clubSecret.id, userId: createdUsers['owner@readbrary.com'].id, role: 'OWNER' },
+  });
+
+  // Seed pending join request
+  console.log('📬 Seeding pending join requests...');
+  await db.clubJoinRequest.create({
+    data: {
+      clubId: clubSecret.id,
+      userId: createdUsers['reader2@readbrary.com'].id,
+    },
   });
 
   console.log('✅ Assigned memberships.');

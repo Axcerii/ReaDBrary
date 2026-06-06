@@ -49,6 +49,7 @@ export class ClubsService {
           data: {
             name: createClubDto.name,
             slug,
+            isPublic: createClubDto.isPublic ?? true,
           },
         });
 
