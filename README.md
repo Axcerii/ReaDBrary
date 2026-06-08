@@ -42,24 +42,38 @@ cp .env.example .env
 ```
 *(The `.env.example` file already contains the default configurations ready for local development via Docker).*
 
-### 2. Launching PostgreSQL databases
-BookShelf uses two distinct databases (one for development and one dedicated to E2E tests) containerized in Docker.
-Run them in the background:
-```bash
-docker compose up -d db db-test
-```
+### 2. Startup Options
 
-### 3. Running Database Migrations
-Apply the Prisma data schema and load tables on both PostgreSQL instances (dev and test):
-```bash
-npm run db:migrate:all
-```
+You can run the application in two different modes depending on your development preferences:
 
-### 4. Starting the API
-Start the NestJS server in development mode (with hot-reload):
-```bash
-npm run start:dev
-```
+#### Option A: Hybrid Mode (Recommended for Active Development)
+In this mode, the databases run in Docker containers in the background, while the NestJS server runs locally on your host machine. This provides the fastest compilation times and best hot-reload feedback.
+
+1. **Start the databases in the background:**
+   ```bash
+   docker compose up -d db db-test
+   ```
+2. **Apply migrations and seed the databases:**
+   ```bash
+   npm run db:migrate:all
+   ```
+3. **Start the NestJS API server locally:**
+   ```bash
+   npm run start:dev
+   ```
+
+#### Option B: Full Containerized Mode (Entire Stack in Docker)
+In this mode, both the databases and the NestJS API server run inside Docker containers.
+
+1. **Start and compile the entire stack:**
+   ```bash
+   docker compose up -d --build
+   ```
+2. **Apply migrations to the databases:**
+   ```bash
+   npm run db:migrate:all
+   ```
+
 The application listens by default on port `3000`.
 
 ---
@@ -146,3 +160,9 @@ services:
     volumes:
       - /var/lib/readbrary/uploads:/usr/src/app/uploads
 ```
+
+## FRONTEND
+
+The Frontend of the application can be found at this Github repository :
+
+> [https://github.com/Axcerii/Heritage-Silencieux](https://github.com/Axcerii/Heritage-Silencieux)
