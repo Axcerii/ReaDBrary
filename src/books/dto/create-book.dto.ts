@@ -19,4 +19,8 @@ export class CreateBookDto {
   @Min(1, { message: 'Le nombre de pages doit être supérieur à 0' })
   @Type(() => Number)
   pages?: number;
+
+  @IsString()
+  @IsOptional()
+  theme?: string;
 }

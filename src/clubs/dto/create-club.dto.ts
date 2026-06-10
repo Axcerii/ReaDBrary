@@ -12,4 +12,8 @@ export class CreateClubDto {
   @IsBoolean()
   @IsOptional()
   isPublic?: boolean;
+
+  @IsString()
+  @IsOptional()
+  theme?: string;
 }

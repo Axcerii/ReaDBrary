@@ -46,9 +46,11 @@ export class BooksService {
         author: createBookDto.author,
         genre: createBookDto.genre,
         pages: createBookDto.pages ?? 0,
+        theme: createBookDto.theme,
         clubId,
       },
     });
+
     return {
       ...createdBook,
       averageRating: null,

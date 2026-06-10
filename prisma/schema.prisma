@@ -53,6 +53,7 @@ model Club {
   slug String @unique
   isActive Boolean @default(true)
   isPublic Boolean @default(true)
+  theme    String?
 
   members ClubMember[]
   books   Book[]
@@ -66,6 +67,7 @@ model Book {
   genre     String
   pages     Int      @default(0)
   isActive  Boolean  @default(true)
+  theme     String?
   clubId    String
   club      Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())

@@ -50,6 +50,7 @@ export class ClubsService {
             name: createClubDto.name,
             slug,
             isPublic: createClubDto.isPublic ?? true,
+            theme: createClubDto.theme,
           },
         });
 
