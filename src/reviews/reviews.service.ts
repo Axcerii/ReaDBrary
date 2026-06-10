@@ -77,24 +77,9 @@ export class ReviewsService {
     });
 
     if (existingReview) {
-      return this.prisma.review.update({
-        where: {
-          id: existingReview.id,
-        },
-        data: {
-          rating: createReviewDto.rating,
-          comment: createReviewDto.comment,
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-        },
-      });
+      throw new ConflictException(
+        'Vous avez déjà donné votre avis sur ce livre.',
+      );
     }
 
     return this.prisma.review.create({

@@ -172,11 +172,13 @@ export class ClubMembersService {
 
   /**
    * Récupère la liste de tous les membres faisant partie d'un club de lecture.
+   * Expose l'adresse email uniquement aux administrateurs de la plateforme.
    *
    * @param clubSlug Le slug du club
+   * @param userStatus Le statut administrateur de l'utilisateur à l'origine de la requête
    * @returns Un tableau contenant les membres du club et leurs profils utilisateur
    */
-  async findMembers(clubSlug: string) {
+  async findMembers(clubSlug: string, userStatus: { isAdmin: boolean }) {
     const clubId = await this.getClubIdBySlug(clubSlug);
 
     return this.prisma.clubMember.findMany({
@@ -186,7 +188,7 @@ export class ClubMembersService {
           select: {
             id: true,
             name: true,
-            email: true,
+            email: userStatus.isAdmin,
           },
         },
       },
