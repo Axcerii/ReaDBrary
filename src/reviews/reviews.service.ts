@@ -66,7 +66,7 @@ export class ReviewsService {
   ) {
     await this.verifyBookInClub(clubSlug, bookId, userStatus);
 
-    // Uniqueness constraint: a user can only review a book once
+    // Uniqueness constraint: a user can only review a book once. If exists, update it.
     const existingReview = await this.prisma.review.findUnique({
       where: {
         userId_bookId: {
@@ -77,9 +77,24 @@ export class ReviewsService {
     });
 
     if (existingReview) {
-      throw new ConflictException(
-        'Vous avez déjà donné votre avis sur ce livre.',
-      );
+      return this.prisma.review.update({
+        where: {
+          id: existingReview.id,
+        },
+        data: {
+          rating: createReviewDto.rating,
+          comment: createReviewDto.comment,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      });
     }
 
     return this.prisma.review.create({
