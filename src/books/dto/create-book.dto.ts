@@ -1,5 +1,6 @@
-import { IsString, IsNotEmpty, IsInt, Min, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsInt, Min, IsOptional, IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
+import { DragonTheme } from '../../../generated/prisma/client';
 
 export class CreateBookDto {
   @IsString()
@@ -20,7 +21,7 @@ export class CreateBookDto {
   @Type(() => Number)
   pages?: number;
 
-  @IsString()
   @IsOptional()
-  theme?: string;
+  @IsEnum(DragonTheme, { message: "Le thème doit être l'un des dragons suivants : Aqua, Artrish, Chronos, Drii, Goliath, Guizamark, Lada, Pestia, Pura, Shizari, Yinva" })
+  theme?: DragonTheme;
 }

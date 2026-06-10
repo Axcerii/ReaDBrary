@@ -25,6 +25,20 @@ enum Role {
   USER
 }
 
+enum DragonTheme {
+  Aqua
+  Artrish
+  Chronos
+  Drii
+  Goliath
+  Guizamark
+  Lada
+  Pestia
+  Pura
+  Shizari
+  Yinva
+}
+
 model User {
   id    String  @id @default(uuid())
   email String  @unique
@@ -53,7 +67,7 @@ model Club {
   slug String @unique
   isActive Boolean @default(true)
   isPublic Boolean @default(true)
-  theme    String?
+  theme    DragonTheme?
 
   members ClubMember[]
   books   Book[]
@@ -67,7 +81,7 @@ model Book {
   genre     String
   pages     Int      @default(0)
   isActive  Boolean  @default(true)
-  theme     String?
+  theme     DragonTheme?
   clubId    String
   club      Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())

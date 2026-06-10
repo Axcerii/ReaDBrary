@@ -1,4 +1,5 @@
-import { IsString, IsNotEmpty, IsOptional, IsBoolean } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsBoolean, IsEnum } from 'class-validator';
+import { DragonTheme } from '../../../generated/prisma/client';
 
 export class CreateClubDto {
   @IsString()
@@ -13,7 +14,7 @@ export class CreateClubDto {
   @IsOptional()
   isPublic?: boolean;
 
-  @IsString()
   @IsOptional()
-  theme?: string;
+  @IsEnum(DragonTheme, { message: "Le thème doit être l'un des dragons suivants : Aqua, Artrish, Chronos, Drii, Goliath, Guizamark, Lada, Pestia, Pura, Shizari, Yinva" })
+  theme?: DragonTheme;
 }
