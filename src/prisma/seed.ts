@@ -25,8 +25,10 @@ export async function seed(prismaInstance?: any) {
 
   // 2. Create Users using Better Auth programmatic signup
   console.log('👥 Creating users...');
+  const adminEmail = process.env.ADMIN_EMAIL || 'serena.gaujes@readbrary.com';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'HeritageSilencieux2!';
   const usersToCreate = [
-    { email: 'admin@readbrary.com', password: 'AdminPassword123!', name: 'Admin Reader', role: 'ADMIN' },
+    { email: adminEmail, password: adminPassword, name: 'Admin Reader', role: 'ADMIN' },
     { email: 'owner@readbrary.com', password: 'OwnerPassword123!', name: 'Club Owner', role: 'USER' },
     { email: 'reader1@readbrary.com', password: 'ReaderPassword123!', name: 'Alice Reader', role: 'USER' },
     { email: 'reader2@readbrary.com', password: 'ReaderPassword123!', name: 'Bob Reader', role: 'USER' },
@@ -69,6 +71,7 @@ export async function seed(prismaInstance?: any) {
       slug: 'le-club-des-classiques',
       isActive: true,
       isPublic: true,
+      theme: 'Pura',
     },
   });
 
@@ -78,6 +81,7 @@ export async function seed(prismaInstance?: any) {
       slug: 'science-fiction-fantasy',
       isActive: true,
       isPublic: true,
+      theme: 'Yinva',
     },
   });
 
@@ -87,6 +91,7 @@ export async function seed(prismaInstance?: any) {
       slug: 'club-prive-inactif',
       isActive: false,
       isPublic: false,
+      theme: 'Goliath',
     },
   });
 
@@ -96,6 +101,7 @@ export async function seed(prismaInstance?: any) {
       slug: 'cercle-de-l-ombre',
       isActive: true,
       isPublic: false,
+      theme: 'Shizari',
     },
   });
 
@@ -154,6 +160,7 @@ export async function seed(prismaInstance?: any) {
       genre: 'Fable',
       pages: 96,
       isActive: true,
+      theme: 'Pura',
       clubId: clubClassiques.id,
     },
   });
@@ -165,6 +172,7 @@ export async function seed(prismaInstance?: any) {
       genre: 'Roman historique',
       pages: 1488,
       isActive: true,
+      theme: 'Goliath',
       clubId: clubClassiques.id,
     },
   });
@@ -176,6 +184,7 @@ export async function seed(prismaInstance?: any) {
       genre: 'Science-Fiction',
       pages: 896,
       isActive: true,
+      theme: 'Yinva',
       clubId: clubSF.id,
     },
   });
@@ -187,6 +196,7 @@ export async function seed(prismaInstance?: any) {
       genre: 'Fantasy',
       pages: 310,
       isActive: true,
+      theme: 'Pestia',
       clubId: clubSF.id,
     },
   });
@@ -198,6 +208,7 @@ export async function seed(prismaInstance?: any) {
       genre: 'Mystère',
       pages: 150,
       isActive: false,
+      theme: 'Chronos',
       clubId: clubClassiques.id,
     },
   });
