@@ -217,8 +217,14 @@ export class ClubMembersService {
       throw new ConflictException('Vous êtes déjà membre de ce cercle de lecture.');
     }
 
-    if (club.isPublic) {
-      // Public club: join instantly as READER
+    // Check if user is an ADMIN to join instantly
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+    const isAdmin = user?.role === 'ADMIN';
+
+    if (club.isPublic || isAdmin) {
+      // Public club or Admin: join instantly as READER
       const membership = await this.prisma.clubMember.create({
         data: {
           clubId: club.id,
