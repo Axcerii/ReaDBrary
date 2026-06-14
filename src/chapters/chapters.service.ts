@@ -33,20 +33,26 @@ export class ChaptersService {
    */
   private async findBookInClub(
     clubId: string,
-    bookId: string,
+    bookIdOrSlug: string,
     userStatus: { isAdmin: boolean; isOwner: boolean },
   ) {
     const book = await this.prisma.book.findFirst({
-      where: { id: bookId, clubId },
+      where: {
+        clubId,
+        OR: [
+          { id: bookIdOrSlug },
+          { slug: bookIdOrSlug },
+        ],
+      },
     });
     if (!book) {
       throw new NotFoundException(
-        `Le livre avec l'ID "${bookId}" n'existe pas dans ce club.`,
+        `Le grimoire "${bookIdOrSlug}" n'existe pas dans ce club.`,
       );
     }
     if (!book.isActive && !userStatus.isAdmin && !userStatus.isOwner) {
       throw new NotFoundException(
-        `Le livre avec l'ID "${bookId}" n'existe pas dans ce club.`,
+        `Le grimoire "${bookIdOrSlug}" n'existe pas dans ce club.`,
       );
     }
     return book;
@@ -83,12 +89,13 @@ export class ChaptersService {
    */
   async create(
     clubSlug: string,
-    bookId: string,
+    bookIdOrSlug: string,
     createDto: CreateChapterDto,
     userStatus: { isAdmin: boolean; isOwner: boolean },
   ) {
     const clubId = await this.getClubIdBySlug(clubSlug);
-    await this.findBookInClub(clubId, bookId, userStatus);
+    const book = await this.findBookInClub(clubId, bookIdOrSlug, userStatus);
+    const bookId = book.id;
 
     const totalChapters = await this.prisma.chapter.count({
       where: { bookId },
@@ -140,13 +147,14 @@ export class ChaptersService {
    */
   async findAll(
     clubSlug: string,
-    bookId: string,
+    bookIdOrSlug: string,
     query: { page?: number; limit?: number },
     userStatus: { isAdmin: boolean; isOwner: boolean },
     userId?: string,
   ) {
     const clubId = await this.getClubIdBySlug(clubSlug);
-    await this.findBookInClub(clubId, bookId, userStatus);
+    const book = await this.findBookInClub(clubId, bookIdOrSlug, userStatus);
+    const bookId = book.id;
 
     const page = Number(query.page ?? 1);
     const limit = Math.min(Number(query.limit ?? 10), 50);
@@ -192,13 +200,14 @@ export class ChaptersService {
    */
   async findOne(
     clubSlug: string,
-    bookId: string,
+    bookIdOrSlug: string,
     index: number,
     userStatus: { isAdmin: boolean; isOwner: boolean },
     userId?: string,
   ) {
     const clubId = await this.getClubIdBySlug(clubSlug);
-    await this.findBookInClub(clubId, bookId, userStatus);
+    const book = await this.findBookInClub(clubId, bookIdOrSlug, userStatus);
+    const bookId = book.id;
 
     const chapter = await this.prisma.chapter.findUnique({
       where: {
@@ -239,14 +248,16 @@ export class ChaptersService {
    */
   async toggleRead(
     clubSlug: string,
-    bookId: string,
+    bookIdOrSlug: string,
     index: number,
     userId: string,
     read: boolean,
     userStatus: { isAdmin: boolean; isOwner: boolean },
   ) {
     const clubId = await this.getClubIdBySlug(clubSlug);
-    await this.findBookInClub(clubId, bookId, userStatus);
+    const book = await this.findBookInClub(clubId, bookIdOrSlug, userStatus);
+    const bookId = book.id;
+
     const chapter = await this.prisma.chapter.findUnique({
       where: {
         bookId_index: {
@@ -327,13 +338,14 @@ export class ChaptersService {
    */
   async update(
     clubSlug: string,
-    bookId: string,
+    bookIdOrSlug: string,
     index: number,
     updateDto: UpdateChapterDto,
     userStatus: { isAdmin: boolean; isOwner: boolean },
   ) {
     const clubId = await this.getClubIdBySlug(clubSlug);
-    await this.findBookInClub(clubId, bookId, userStatus);
+    const book = await this.findBookInClub(clubId, bookIdOrSlug, userStatus);
+    const bookId = book.id;
 
     const targetChapter = await this.prisma.chapter.findUnique({
       where: {
@@ -451,12 +463,13 @@ export class ChaptersService {
    */
   async remove(
     clubSlug: string,
-    bookId: string,
+    bookIdOrSlug: string,
     index: number,
     userStatus: { isAdmin: boolean; isOwner: boolean },
   ) {
     const clubId = await this.getClubIdBySlug(clubSlug);
-    await this.findBookInClub(clubId, bookId, userStatus);
+    const book = await this.findBookInClub(clubId, bookIdOrSlug, userStatus);
+    const bookId = book.id;
 
     const targetChapter = await this.prisma.chapter.findUnique({
       where: {

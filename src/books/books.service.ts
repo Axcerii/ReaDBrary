@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  ConflictException,
 } from '@nestjs/common';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
@@ -11,6 +12,21 @@ import { PrismaService } from '../prisma/prisma.service';
 @Injectable()
 export class BooksService {
   constructor(private readonly prisma: PrismaService) {}
+
+  /**
+   * Convertit une chaîne de caractères en slug d'URL valide.
+   */
+  private slugify(text: string): string {
+    return text
+      .toString()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-]+/g, '')
+      .replace(/\-\-+/g, '-');
+  }
 
   /**
    * Récupère l'ID d'un club de lecture à partir de son slug.
@@ -40,21 +56,32 @@ export class BooksService {
    */
   async create(clubSlug: string, createBookDto: CreateBookDto) {
     const clubId = await this.getClubIdBySlug(clubSlug);
-    const createdBook = await this.prisma.book.create({
-      data: {
-        title: createBookDto.title,
-        author: createBookDto.author,
-        genre: createBookDto.genre,
-        pages: createBookDto.pages ?? 0,
-        theme: createBookDto.theme,
-        clubId,
-      },
-    });
+    const slug = this.slugify(createBookDto.slug || createBookDto.title);
+    try {
+      const createdBook = await this.prisma.book.create({
+        data: {
+          title: createBookDto.title,
+          slug,
+          author: createBookDto.author,
+          genre: createBookDto.genre,
+          pages: createBookDto.pages ?? 0,
+          theme: createBookDto.theme,
+          clubId,
+        },
+      });
 
-    return {
-      ...createdBook,
-      averageRating: null,
-    };
+      return {
+        ...createdBook,
+        averageRating: null,
+      };
+    } catch (error: any) {
+      if (error.code === 'P2002') {
+        throw new ConflictException(
+          `Le slug "${slug}" est déjà utilisé par un autre grimoire.`,
+        );
+      }
+      throw error;
+    }
   }
 
   /**
@@ -125,37 +152,40 @@ export class BooksService {
   }
 
   /**
-   * Récupère un livre spécifique par son identifiant.
+   * Récupère un livre spécifique par son identifiant ou son slug.
    * Calcule et renvoie la note moyenne calculée sur l'ensemble des revues de ce livre.
    *
    * @param clubSlug Le slug du club de lecture
-   * @param id L'identifiant du livre
+   * @param idOrSlug L'identifiant ou le slug du livre
    * @param userStatus Le statut/rôle de l'utilisateur demandeur
    * @throws NotFoundException Si le livre n'existe pas ou s'il est inactif et inaccessible pour l'utilisateur
    * @returns Le livre trouvé agrémenté de sa note moyenne (averageRating)
    */
   async findOne(
     clubSlug: string,
-    id: string,
+    idOrSlug: string,
     userStatus: { isAdmin: boolean; isOwner: boolean },
   ) {
     const clubId = await this.getClubIdBySlug(clubSlug);
     const book = await this.prisma.book.findFirst({
       where: {
-        id,
         clubId,
+        OR: [
+          { id: idOrSlug },
+          { slug: idOrSlug },
+        ],
       },
     });
 
     if (!book) {
       throw new NotFoundException(
-        `Le livre avec l'ID "${id}" n'existe pas dans ce club.`,
+        `Le grimoire avec l'ID ou slug "${idOrSlug}" n'existe pas dans ce club.`,
       );
     }
 
     if (!book.isActive && !userStatus.isAdmin && !userStatus.isOwner) {
       throw new NotFoundException(
-        `Le livre avec l'ID "${id}" n'existe pas dans ce club.`,
+        `Le grimoire avec l'ID ou slug "${idOrSlug}" n'existe pas dans ce club.`,
       );
     }
 
@@ -177,7 +207,7 @@ export class BooksService {
    * Seuls les administrateurs globaux et propriétaires de club ont le droit d'activer/désactiver un livre.
    *
    * @param clubSlug Le slug du club de lecture
-   * @param id L'identifiant du livre
+   * @param idOrSlug L'identifiant ou le slug du livre
    * @param updateBookDto Les modifications à appliquer
    * @param userStatus Le statut/rôle de l'utilisateur demandeur
    * @throws ForbiddenException Si l'utilisateur tente de modifier isActive sans privilèges suffisants
@@ -185,11 +215,11 @@ export class BooksService {
    */
   async update(
     clubSlug: string,
-    id: string,
+    idOrSlug: string,
     updateBookDto: UpdateBookDto,
     userStatus: { isAdmin: boolean; isOwner: boolean },
   ) {
-    const book = await this.findOne(clubSlug, id, userStatus);
+    const book = await this.findOne(clubSlug, idOrSlug, userStatus);
 
     if (updateBookDto.isActive !== undefined) {
       if (!userStatus.isAdmin && !userStatus.isOwner) {
@@ -199,31 +229,45 @@ export class BooksService {
       }
     }
 
-    const updatedBook = await this.prisma.book.update({
-      where: { id: book.id },
-      data: updateBookDto,
-    });
+    const updateData: any = { ...updateBookDto };
+    if (updateBookDto.slug) {
+      updateData.slug = this.slugify(updateBookDto.slug);
+    }
 
-    return {
-      ...updatedBook,
-      averageRating: book.averageRating,
-    };
+    try {
+      const updatedBook = await this.prisma.book.update({
+        where: { id: book.id },
+        data: updateData,
+      });
+
+      return {
+        ...updatedBook,
+        averageRating: book.averageRating,
+      };
+    } catch (error: any) {
+      if (error.code === 'P2002') {
+        throw new ConflictException(
+          `Le slug "${updateData.slug}" est déjà utilisé par un autre grimoire.`,
+        );
+      }
+      throw error;
+    }
   }
 
   /**
    * Supprime un livre d'un club de lecture.
    *
    * @param clubSlug Le slug du club de lecture
-   * @param id L'identifiant du livre à supprimer
+   * @param idOrSlug L'identifiant ou le slug du livre à supprimer
    * @param userStatus Le statut/rôle de l'utilisateur demandeur
    * @returns Le livre supprimé
    */
   async remove(
     clubSlug: string,
-    id: string,
+    idOrSlug: string,
     userStatus: { isAdmin: boolean; isOwner: boolean },
   ) {
-    const book = await this.findOne(clubSlug, id, userStatus);
+    const book = await this.findOne(clubSlug, idOrSlug, userStatus);
 
     return this.prisma.book.delete({
       where: { id: book.id },
