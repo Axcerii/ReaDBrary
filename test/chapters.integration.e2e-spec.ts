@@ -108,6 +108,7 @@ describe('Chapters Module (e2e)', () => {
     book = await prisma.book.create({
       data: {
         title: 'Livre E2E',
+        slug: 'livre-e2e',
         author: 'Auteur E2E',
         genre: 'Sci-Fi',
         pages: 0,

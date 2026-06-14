@@ -24,4 +24,8 @@ export class CreateBookDto {
   @IsOptional()
   @IsEnum(DragonTheme, { message: "Le thème doit être l'un des dragons suivants : Aqua, Artrish, Chronos, Drii, Goliath, Guizamark, Lada, Pestia, Pura, Shizari, Yinva" })
   theme?: DragonTheme;
+
+  @IsOptional()
+  @IsString()
+  slug?: string;
 }

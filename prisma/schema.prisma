@@ -78,6 +78,7 @@ model Club {
 model Book {
   id        String   @id @default(uuid())
   title     String
+  slug      String   @unique
   author    String
   genre     String
   pages     Int      @default(0)

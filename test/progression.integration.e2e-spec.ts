@@ -106,6 +106,7 @@ describe('Progression Module (e2e)', () => {
     book = await prisma.book.create({
       data: {
         title: 'Le Petit Prince',
+        slug: 'le-petit-prince',
         author: 'Antoine de Saint-Exupéry',
         genre: 'Fable',
         pages: 100,
@@ -260,6 +261,7 @@ describe('Progression Module (e2e)', () => {
       const inactiveBook = await prisma.book.create({
         data: {
           title: 'Livre Inactif',
+          slug: 'livre-inactif-1',
           author: 'Auteur',
           genre: 'Genre',
           pages: 100,
@@ -347,6 +349,7 @@ describe('Progression Module (e2e)', () => {
       const inactiveBook = await prisma.book.create({
         data: {
           title: 'Livre Inactif',
+          slug: 'livre-inactif-2',
           author: 'Auteur',
           genre: 'Genre',
           pages: 100,
@@ -479,6 +482,7 @@ describe('Progression Module (e2e)', () => {
       const inactiveBook = await prisma.book.create({
         data: {
           title: 'Livre Inactif',
+          slug: 'livre-inactif-3',
           author: 'Auteur',
           genre: 'Genre',
           pages: 100,

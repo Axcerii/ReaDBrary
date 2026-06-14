@@ -344,6 +344,7 @@ second@example.com,INVALIDE`;
       book = await prisma.book.create({
         data: {
           title: 'Book for reviews',
+          slug: 'book-for-reviews',
           author: 'Author A',
           genre: 'Genre A',
           pages: 150,

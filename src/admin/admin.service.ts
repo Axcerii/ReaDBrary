@@ -135,6 +135,21 @@ export class AdminService {
   }
 
   /**
+   * Convertit une chaîne de caractères en slug d'URL valide.
+   */
+  private slugify(text: string): string {
+    return text
+      .toString()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-]+/g, '')
+      .replace(/\-\-+/g, '-');
+  }
+
+  /**
    * Importe des livres en masse dans un club à partir d'un fichier CSV.
    * Valide chaque ligne et applique l'import de façon transactionnelle (tous les livres ou aucun).
    *
@@ -216,8 +231,19 @@ export class AdminService {
           error: rowErrors.join(' '),
         });
       } else {
+        const baseSlug = this.slugify(title);
+        let slug = baseSlug;
+        let count = 1;
+        while (
+          booksToCreate.some((b) => b.slug === slug) ||
+          (await this.prisma.book.findUnique({ where: { slug } }))
+        ) {
+          slug = `${baseSlug}-${count++}`;
+        }
+
         booksToCreate.push({
           title,
+          slug,
           author,
           genre,
           pages,

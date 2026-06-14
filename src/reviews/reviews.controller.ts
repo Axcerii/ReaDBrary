@@ -39,7 +39,7 @@ interface AuthenticatedRequest extends Request {
 
 @ApiTags('Reviews')
 @ApiBearerAuth()
-@Controller('clubs/:clubSlug/books/:bookId/reviews')
+@Controller('clubs/:clubSlug/books/:bookSlug/reviews')
 @UseGuards(ClubRolesGuard)
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
@@ -59,7 +59,7 @@ export class ReviewsController {
   })
   async create(
     @Param('clubSlug') clubSlug: string,
-    @Param('bookId') bookId: string,
+    @Param('bookSlug') bookSlug: string,
     @Body() createReviewDto: CreateReviewDto,
     @Req() req: AuthenticatedRequest,
   ) {
@@ -70,7 +70,7 @@ export class ReviewsController {
     const userStatus = this.getUserStatus(req);
     return this.reviewsService.create(
       clubSlug,
-      bookId,
+      bookSlug,
       userId,
       createReviewDto,
       userStatus,
@@ -83,10 +83,10 @@ export class ReviewsController {
   @ApiResponse({ status: 200, description: 'List of reviews returned.' })
   async findAll(
     @Param('clubSlug') clubSlug: string,
-    @Param('bookId') bookId: string,
+    @Param('bookSlug') bookSlug: string,
     @Req() req: AuthenticatedRequest,
   ) {
     const userStatus = this.getUserStatus(req);
-    return this.reviewsService.findAll(clubSlug, bookId, userStatus);
+    return this.reviewsService.findAll(clubSlug, bookSlug, userStatus);
   }
 }

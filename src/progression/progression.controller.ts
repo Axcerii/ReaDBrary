@@ -39,7 +39,7 @@ interface AuthenticatedRequest extends Request {
 
 @ApiTags('Reading Progression')
 @ApiBearerAuth()
-@Controller('clubs/:clubSlug/books/:bookId')
+@Controller('clubs/:clubSlug/books/:bookSlug')
 @UseGuards(ClubRolesGuard)
 export class ProgressionController {
   constructor(private readonly progressionService: ProgressionService) {}
@@ -59,7 +59,7 @@ export class ProgressionController {
   })
   async update(
     @Param('clubSlug') clubSlug: string,
-    @Param('bookId') bookId: string,
+    @Param('bookSlug') bookSlug: string,
     @Body() updateProgressionDto: UpdateProgressionDto,
     @Req() req: AuthenticatedRequest,
   ) {
@@ -70,7 +70,7 @@ export class ProgressionController {
     const userStatus = this.getUserStatus(req);
     return this.progressionService.updateProgression(
       clubSlug,
-      bookId,
+      bookSlug,
       userId,
       updateProgressionDto,
       userStatus,
@@ -86,7 +86,7 @@ export class ProgressionController {
   })
   async get(
     @Param('clubSlug') clubSlug: string,
-    @Param('bookId') bookId: string,
+    @Param('bookSlug') bookSlug: string,
     @Req() req: AuthenticatedRequest,
   ) {
     const userId = req.userSession?.user?.id;
@@ -96,7 +96,7 @@ export class ProgressionController {
     const userStatus = this.getUserStatus(req);
     return this.progressionService.getProgression(
       clubSlug,
-      bookId,
+      bookSlug,
       userId,
       userStatus,
     );
@@ -113,13 +113,13 @@ export class ProgressionController {
   })
   async getGlobal(
     @Param('clubSlug') clubSlug: string,
-    @Param('bookId') bookId: string,
+    @Param('bookSlug') bookSlug: string,
     @Req() req: AuthenticatedRequest,
   ) {
     const userStatus = this.getUserStatus(req);
     return this.progressionService.getGlobalProgressions(
       clubSlug,
-      bookId,
+      bookSlug,
       userStatus,
     );
   }
