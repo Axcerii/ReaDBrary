@@ -156,6 +156,7 @@ export async function seed(prismaInstance?: any) {
   const bookPrince = await db.book.create({
     data: {
       title: 'Le Petit Prince',
+      slug: 'le-petit-prince',
       author: 'Antoine de Saint-Exupéry',
       genre: 'Fable',
       pages: 96,
@@ -168,6 +169,7 @@ export async function seed(prismaInstance?: any) {
   const bookMiserables = await db.book.create({
     data: {
       title: 'Les Misérables',
+      slug: 'les-miserables',
       author: 'Victor Hugo',
       genre: 'Roman historique',
       pages: 1488,
@@ -180,6 +182,7 @@ export async function seed(prismaInstance?: any) {
   const bookDune = await db.book.create({
     data: {
       title: 'Dune',
+      slug: 'dune',
       author: 'Frank Herbert',
       genre: 'Science-Fiction',
       pages: 896,
@@ -192,6 +195,7 @@ export async function seed(prismaInstance?: any) {
   const bookHobbit = await db.book.create({
     data: {
       title: 'Le Hobbit',
+      slug: 'le-hobbit',
       author: 'J.R.R. Tolkien',
       genre: 'Fantasy',
       pages: 310,
@@ -204,6 +208,7 @@ export async function seed(prismaInstance?: any) {
   const bookInactif = await db.book.create({
     data: {
       title: 'Livre Secret Inactif',
+      slug: 'livre-secret-inactif',
       author: 'Auteur Inconnu',
       genre: 'Mystère',
       pages: 150,

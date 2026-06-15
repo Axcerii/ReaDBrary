@@ -228,6 +228,65 @@ describe('Books Module (e2e)', () => {
         'Le nombre de pages doit être supérieur à 0',
       );
     });
+
+    it('should generate a slug when creating a book without a slug', async () => {
+      authenticateAs(ownerUser);
+
+      const response = await apiRequest()
+        .post(`/clubs/${club.slug}/books`)
+        .send({
+          title: 'Un Beau Livre Unique',
+          author: 'Auteur',
+          genre: 'Fable',
+          pages: 100,
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.slug).toBe('un-beau-livre-unique');
+    });
+
+    it('should allow providing a custom slug', async () => {
+      authenticateAs(ownerUser);
+
+      const response = await apiRequest()
+        .post(`/clubs/${club.slug}/books`)
+        .send({
+          title: 'Titre de Test',
+          slug: 'mon-slug-perso',
+          author: 'Auteur',
+          genre: 'Fable',
+          pages: 100,
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.slug).toBe('mon-slug-perso');
+    });
+
+    it('should throw ConflictException (409) if slug already exists', async () => {
+      authenticateAs(ownerUser);
+
+      await apiRequest()
+        .post(`/clubs/${club.slug}/books`)
+        .send({
+          title: 'Premier Livre',
+          slug: 'duplicate-slug',
+          author: 'Auteur',
+          genre: 'Fable',
+          pages: 100,
+        });
+
+      const response = await apiRequest()
+        .post(`/clubs/${club.slug}/books`)
+        .send({
+          title: 'Deuxième Livre',
+          slug: 'duplicate-slug',
+          author: 'Auteur',
+          genre: 'Fable',
+          pages: 100,
+        });
+
+      expect(response.status).toBe(409);
+    });
   });
 
   describe('GET /clubs/:clubSlug/books', () => {
@@ -235,6 +294,7 @@ describe('Books Module (e2e)', () => {
       await prisma.book.create({
         data: {
           title: 'Livre Un',
+          slug: 'livre-un',
           author: 'Auteur A',
           genre: 'Sci-Fi',
           pages: 100,
@@ -245,6 +305,7 @@ describe('Books Module (e2e)', () => {
       await prisma.book.create({
         data: {
           title: 'Livre Deux',
+          slug: 'livre-deux',
           author: 'Auteur B',
           genre: 'Fantasy',
           pages: 200,
@@ -255,6 +316,7 @@ describe('Books Module (e2e)', () => {
       await prisma.book.create({
         data: {
           title: 'Livre Trois',
+          slug: 'livre-trois',
           author: 'Auteur A',
           genre: 'Sci-Fi',
           pages: 300,
@@ -321,6 +383,7 @@ describe('Books Module (e2e)', () => {
       await prisma.book.create({
         data: {
           title: 'Livre Inactif',
+          slug: 'livre-inactif',
           author: 'Auteur X',
           genre: 'Mystère',
           pages: 150,
@@ -376,6 +439,7 @@ describe('Books Module (e2e)', () => {
       createdBook = await prisma.book.create({
         data: {
           title: 'Livre Unique',
+          slug: 'livre-unique',
           author: 'Auteur',
           genre: 'Genre',
           pages: 150,
@@ -389,6 +453,19 @@ describe('Books Module (e2e)', () => {
 
       const response = await apiRequest().get(
         `/clubs/${club.slug}/books/${createdBook.id}`,
+      );
+
+      expect(response.status).toBe(200);
+
+      const body = response.body as Book;
+      expect(body.title).toBe('Livre Unique');
+    });
+
+    it('should return the book by its slug', async () => {
+      authenticateAs(readerUser);
+
+      const response = await apiRequest().get(
+        `/clubs/${club.slug}/books/${createdBook.slug}`,
       );
 
       expect(response.status).toBe(200);
@@ -411,6 +488,7 @@ describe('Books Module (e2e)', () => {
       const inactiveBook = await prisma.book.create({
         data: {
           title: 'Livre Secret Inactif',
+          slug: 'livre-secret-inactif',
           author: 'Auteur',
           genre: 'Genre',
           pages: 150,
@@ -457,6 +535,7 @@ describe('Books Module (e2e)', () => {
       createdBook = await prisma.book.create({
         data: {
           title: 'Livre Original',
+          slug: 'livre-original',
           author: 'Auteur',
           genre: 'Genre',
           pages: 150,
@@ -477,6 +556,28 @@ describe('Books Module (e2e)', () => {
       const body = response.body as Book;
       expect(body.title).toBe('Livre Modifié');
       expect(body.pages).toBe(180);
+    });
+
+    it('should allow updating the book using its slug', async () => {
+      authenticateAs(editorUser);
+
+      const response = await apiRequest()
+        .patch(`/clubs/${club.slug}/books/${createdBook.slug}`)
+        .send({ title: 'Livre Modifié Par Slug' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.title).toBe('Livre Modifié Par Slug');
+    });
+
+    it('should allow updating the book slug itself', async () => {
+      authenticateAs(editorUser);
+
+      const response = await apiRequest()
+        .patch(`/clubs/${club.slug}/books/${createdBook.id}`)
+        .send({ slug: 'nouveau-slug-modifie' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.slug).toBe('nouveau-slug-modifie');
     });
 
     it('should deny update access to a READER (403)', async () => {
@@ -521,6 +622,7 @@ describe('Books Module (e2e)', () => {
       const inactiveBook = await prisma.book.create({
         data: {
           title: 'Inactif',
+          slug: 'inactif',
           author: 'Auteur',
           genre: 'Genre',
           pages: 150,
@@ -545,6 +647,7 @@ describe('Books Module (e2e)', () => {
       createdBook = await prisma.book.create({
         data: {
           title: 'Livre Mortel',
+          slug: 'livre-mortel',
           author: 'Auteur',
           genre: 'Genre',
           pages: 150,
@@ -558,6 +661,21 @@ describe('Books Module (e2e)', () => {
 
       const response = await apiRequest().delete(
         `/clubs/${club.slug}/books/${createdBook.id}`,
+      );
+
+      expect(response.status).toBe(200);
+
+      const book = await prisma.book.findUnique({
+        where: { id: createdBook.id },
+      });
+      expect(book).toBeNull();
+    });
+
+    it('should allow an OWNER to delete the book using its slug', async () => {
+      authenticateAs(ownerUser);
+
+      const response = await apiRequest().delete(
+        `/clubs/${club.slug}/books/${createdBook.slug}`,
       );
 
       expect(response.status).toBe(200);
@@ -585,6 +703,7 @@ describe('Books Module (e2e)', () => {
         data: [
           {
             title: 'Livre A',
+            slug: 'livre-a',
             author: 'Auteur A',
             genre: 'Genre A',
             pages: 100,
@@ -592,6 +711,7 @@ describe('Books Module (e2e)', () => {
           },
           {
             title: 'Livre B',
+            slug: 'livre-b',
             author: 'Auteur B',
             genre: 'Genre B',
             pages: 200,
@@ -634,6 +754,7 @@ describe('Books Module (e2e)', () => {
       await prisma.book.create({
         data: {
           title: 'Livre Inactif',
+          slug: 'livre-inactif-export',
           author: 'Auteur C',
           genre: 'Genre C',
           pages: 150,

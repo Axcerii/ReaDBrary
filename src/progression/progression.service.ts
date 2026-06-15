@@ -78,20 +78,26 @@ export class ProgressionService {
    */
   private async findBookInClub(
     clubId: string,
-    bookId: string,
+    bookIdOrSlug: string,
     userStatus: { isAdmin: boolean; isOwner: boolean },
   ) {
     const book = await this.prisma.book.findFirst({
-      where: { id: bookId, clubId },
+      where: {
+        clubId,
+        OR: [
+          { id: bookIdOrSlug },
+          { slug: bookIdOrSlug },
+        ],
+      },
     });
     if (!book) {
       throw new NotFoundException(
-        `Le livre avec l'ID "${bookId}" n'existe pas dans ce club.`,
+        `Le grimoire "${bookIdOrSlug}" n'existe pas dans ce club.`,
       );
     }
     if (!book.isActive && !userStatus.isAdmin && !userStatus.isOwner) {
       throw new NotFoundException(
-        `Le livre avec l'ID "${bookId}" n'existe pas dans ce club.`,
+        `Le grimoire "${bookIdOrSlug}" n'existe pas dans ce club.`,
       );
     }
     return book;
@@ -102,7 +108,7 @@ export class ProgressionService {
    * Calcule le pourcentage de progression et fournit le contenu textuel et image de la page courante.
    *
    * @param clubSlug Le slug du club de lecture
-   * @param bookId L'identifiant du livre
+   * @param bookIdOrSlug L'identifiant ou le slug du livre
    * @param userId L'identifiant de l'utilisateur
    * @param updateDto Le nouvel index de page courante
    * @param userStatus Le statut d'accès de l'utilisateur demandeur
@@ -111,13 +117,14 @@ export class ProgressionService {
    */
   async updateProgression(
     clubSlug: string,
-    bookId: string,
+    bookIdOrSlug: string,
     userId: string,
     updateDto: UpdateProgressionDto,
     userStatus: { isAdmin: boolean; isOwner: boolean },
   ) {
     const clubId = await this.getClubIdBySlug(clubSlug);
-    const book = await this.findBookInClub(clubId, bookId, userStatus);
+    const book = await this.findBookInClub(clubId, bookIdOrSlug, userStatus);
+    const bookId = book.id;
 
     const totalChapters = await this.prisma.chapter.count({
       where: { bookId },
@@ -169,19 +176,20 @@ export class ProgressionService {
    * Renvoie également les métadonnées de la page en cours.
    *
    * @param clubSlug Le slug du club
-   * @param bookId L'identifiant du livre
+   * @param bookIdOrSlug L'identifiant ou le slug du livre
    * @param userId L'identifiant du membre concerné
    * @param userStatus Le statut d'accès de l'utilisateur demandeur
    * @returns L'état de progression du membre
    */
   async getProgression(
     clubSlug: string,
-    bookId: string,
+    bookIdOrSlug: string,
     userId: string,
     userStatus: { isAdmin: boolean; isOwner: boolean },
   ) {
     const clubId = await this.getClubIdBySlug(clubSlug);
-    const book = await this.findBookInClub(clubId, bookId, userStatus);
+    const book = await this.findBookInClub(clubId, bookIdOrSlug, userStatus);
+    const bookId = book.id;
 
     const progression = await this.prisma.progression.findUnique({
       where: {
@@ -230,17 +238,18 @@ export class ProgressionService {
    * Cette méthode est réservée aux propriétaires de clubs et aux éditeurs.
    *
    * @param clubSlug Le slug du club
-   * @param bookId L'identifiant du livre
+   * @param bookIdOrSlug L'identifiant ou le slug du livre
    * @param userStatus Le statut d'accès de l'utilisateur demandeur
    * @returns Un tableau des progressions de tous les membres avec leurs profils utilisateur
    */
   async getGlobalProgressions(
     clubSlug: string,
-    bookId: string,
+    bookIdOrSlug: string,
     userStatus: { isAdmin: boolean; isOwner: boolean },
   ) {
     const clubId = await this.getClubIdBySlug(clubSlug);
-    const book = await this.findBookInClub(clubId, bookId, userStatus);
+    const book = await this.findBookInClub(clubId, bookIdOrSlug, userStatus);
+    const bookId = book.id;
 
     const members = await this.prisma.clubMember.findMany({
       where: { clubId },

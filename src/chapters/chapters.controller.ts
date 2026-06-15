@@ -52,7 +52,7 @@ interface AuthenticatedRequest extends Request {
 
 @ApiTags('Chapters')
 @ApiBearerAuth()
-@Controller('clubs/:clubSlug/books/:bookId/chapters')
+@Controller('clubs/:clubSlug/books/:bookSlug/chapters')
 @UseGuards(ClubRolesGuard)
 export class ChaptersController {
   constructor(private readonly chaptersService: ChaptersService) {}
@@ -72,14 +72,14 @@ export class ChaptersController {
   @ApiResponse({ status: 400, description: 'Invalid chapter index.' })
   async create(
     @Param('clubSlug') clubSlug: string,
-    @Param('bookId') bookId: string,
+    @Param('bookSlug') bookSlug: string,
     @Body() createChapterDto: CreateChapterDto,
     @Req() req: AuthenticatedRequest,
   ) {
     const userStatus = this.getUserStatus(req);
     return this.chaptersService.create(
       clubSlug,
-      bookId,
+      bookSlug,
       createChapterDto,
       userStatus,
     );
@@ -138,7 +138,7 @@ export class ChaptersController {
   })
   async findAll(
     @Param('clubSlug') clubSlug: string,
-    @Param('bookId') bookId: string,
+    @Param('bookSlug') bookSlug: string,
     @Req() req: AuthenticatedRequest,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
@@ -149,7 +149,7 @@ export class ChaptersController {
     const userId = req.userSession?.user?.id;
     return this.chaptersService.findAll(
       clubSlug,
-      bookId,
+      bookSlug,
       { page: pageNum, limit: limitNum },
       userStatus,
       userId,
@@ -163,7 +163,7 @@ export class ChaptersController {
   @ApiResponse({ status: 404, description: 'Chapter not found.' })
   async findOne(
     @Param('clubSlug') clubSlug: string,
-    @Param('bookId') bookId: string,
+    @Param('bookSlug') bookSlug: string,
     @Param('index') index: string,
     @Req() req: AuthenticatedRequest,
   ) {
@@ -171,7 +171,7 @@ export class ChaptersController {
     const userId = req.userSession?.user?.id;
     return this.chaptersService.findOne(
       clubSlug,
-      bookId,
+      bookSlug,
       Number(index),
       userStatus,
       userId,
@@ -184,7 +184,7 @@ export class ChaptersController {
   @ApiResponse({ status: 200, description: 'Chapter read state updated successfully.' })
   async toggleRead(
     @Param('clubSlug') clubSlug: string,
-    @Param('bookId') bookId: string,
+    @Param('bookSlug') bookSlug: string,
     @Param('index') index: string,
     @Body() updateChapterReadDto: UpdateChapterReadDto,
     @Req() req: AuthenticatedRequest,
@@ -196,7 +196,7 @@ export class ChaptersController {
     const userStatus = this.getUserStatus(req);
     return this.chaptersService.toggleRead(
       clubSlug,
-      bookId,
+      bookSlug,
       Number(index),
       userId,
       updateChapterReadDto.read,
@@ -213,7 +213,7 @@ export class ChaptersController {
   @ApiResponse({ status: 200, description: 'Chapter updated successfully.' })
   async update(
     @Param('clubSlug') clubSlug: string,
-    @Param('bookId') bookId: string,
+    @Param('bookSlug') bookSlug: string,
     @Param('index') index: string,
     @Body() updateChapterDto: UpdateChapterDto,
     @Req() req: AuthenticatedRequest,
@@ -221,7 +221,7 @@ export class ChaptersController {
     const userStatus = this.getUserStatus(req);
     return this.chaptersService.update(
       clubSlug,
-      bookId,
+      bookSlug,
       Number(index),
       updateChapterDto,
       userStatus,
@@ -236,14 +236,14 @@ export class ChaptersController {
   @ApiResponse({ status: 200, description: 'Chapter deleted successfully.' })
   async remove(
     @Param('clubSlug') clubSlug: string,
-    @Param('bookId') bookId: string,
+    @Param('bookSlug') bookSlug: string,
     @Param('index') index: string,
     @Req() req: AuthenticatedRequest,
   ) {
     const userStatus = this.getUserStatus(req);
     return this.chaptersService.remove(
       clubSlug,
-      bookId,
+      bookSlug,
       Number(index),
       userStatus,
     );

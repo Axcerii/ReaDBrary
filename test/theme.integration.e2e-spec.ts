@@ -273,6 +273,7 @@ describe('Theme Categories (e2e)', () => {
       const book = await prisma.book.create({
         data: {
           title: 'A Game of Thrones',
+          slug: 'a-game-of-thrones-1',
           author: 'George R.R. Martin',
           genre: 'Fantasy',
           pages: 800,
@@ -301,6 +302,7 @@ describe('Theme Categories (e2e)', () => {
       const book = await prisma.book.create({
         data: {
           title: 'A Game of Thrones',
+          slug: 'a-game-of-thrones-2',
           author: 'George R.R. Martin',
           genre: 'Fantasy',
           pages: 800,
