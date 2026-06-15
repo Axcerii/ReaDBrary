@@ -15,6 +15,7 @@ FROM base AS dev
 
 # Prisma needs its schema to generate the TS client
 COPY prisma ./prisma
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 RUN npx prisma generate
 
 # No need to copy source code, docker-compose mounts it as a volume!
@@ -30,6 +31,7 @@ FROM base AS builder
 COPY . .
 
 # Generate Prisma client and build NestJS app (creates /dist folder)
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 RUN npx prisma generate
 RUN npm run build
 
