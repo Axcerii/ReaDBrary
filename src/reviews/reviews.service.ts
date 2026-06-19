@@ -1,6 +1,5 @@
 import {
   Injectable,
-  ConflictException,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
@@ -49,7 +48,7 @@ export class ReviewsService {
   }
 
   /**
-   * Crée un avis (critique / note) sur un livre de club.
+   * Crée ou met à jour un avis (critique / note) sur un livre de club.
    * L'utilisateur ne peut laisser qu'un seul avis par livre (contrainte d'unicité).
    *
    * @param clubSlug Le slug du club de lecture
@@ -57,8 +56,7 @@ export class ReviewsService {
    * @param userId L'identifiant de l'utilisateur qui rédige l'avis
    * @param createReviewDto Les données de l'avis (note de 1 à 5, commentaire)
    * @param userStatus Le statut d'accès de l'utilisateur
-   * @throws ConflictException Si l'utilisateur a déjà rédigé un avis sur ce livre
-   * @returns L'avis créé incluant le profil réduit de l'utilisateur
+   * @returns L'avis créé ou mis à jour incluant le profil réduit de l'utilisateur
    */
   async create(
     clubSlug: string,
@@ -81,9 +79,24 @@ export class ReviewsService {
     });
 
     if (existingReview) {
-      throw new ConflictException(
-        'Vous avez déjà donné votre avis sur ce livre.',
-      );
+      return this.prisma.review.update({
+        where: {
+          id: existingReview.id,
+        },
+        data: {
+          rating: createReviewDto.rating,
+          comment: createReviewDto.comment,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      });
     }
 
     return this.prisma.review.create({

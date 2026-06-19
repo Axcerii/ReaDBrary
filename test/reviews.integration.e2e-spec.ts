@@ -204,7 +204,7 @@ describe('Reviews Module (e2e)', () => {
       expect(response3.status).toBe(400);
     });
 
-    it('should fail with 409 Conflict if a user submits multiple reviews for the same book (uniqueness)', async () => {
+    it('should update the existing review if a user submits another review for the same book (uniqueness)', async () => {
       authenticateAs(readerUser);
 
       // First review
@@ -213,12 +213,21 @@ describe('Reviews Module (e2e)', () => {
         .send({ rating: 4, comment: 'Premier commentaire' });
       expect(res1.status).toBe(201);
 
-      // Second review (should fail)
+      // Second review (should update and return 201)
       const res2 = await apiRequest()
         .post(`/clubs/${club.slug}/books/${book.id}/reviews`)
         .send({ rating: 2, comment: 'Deuxième commentaire' });
-      expect(res2.status).toBe(409);
-      expect(res2.body.message).toContain('déjà donné votre avis');
+      expect(res2.status).toBe(201);
+      expect(res2.body.rating).toBe(2);
+      expect(res2.body.comment).toBe('Deuxième commentaire');
+
+      // Verify in database
+      const allReviews = await prisma.review.findMany({
+        where: { bookId: book.id },
+      });
+      expect(allReviews).toHaveLength(1);
+      expect(allReviews[0].rating).toBe(2);
+      expect(allReviews[0].comment).toBe('Deuxième commentaire');
     });
 
     it('should return 404 if the book does not belong to the club', async () => {

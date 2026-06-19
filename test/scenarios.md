@@ -188,7 +188,7 @@ ReaDBrary tests are split into two main categories:
 | `POST /clubs/.../reviews` | Create review - Unauthenticated | Status `401 Unauthorized` |  |
 | `POST /clubs/.../reviews` | Create review - Invalid rating (0 or 6) | Status `400 Bad Request` |  |
 | `POST /clubs/.../reviews` | Create review - Floating point rating (e.g. 4.5) | Status `400 Bad Request` |  |
-| `POST /clubs/.../reviews` | Create review - Duplicate review | Status `409 Conflict`, message: `"déjà donné votre avis"` |  |
+| `POST /clubs/.../reviews` | Create review - Duplicate review (upsert) | Status `201`, updates the existing review rating & comment |  |
 | `POST /clubs/.../reviews` | Create review - Non-existent book | Status `404 Not Found` |  |
 | `POST /clubs/.../reviews` | Create review - Inactive book | `Reader` receives `404`; `Owner`/`Admin` receive `201` |  |
 | `GET /clubs/.../reviews` | List book reviews - Club Member | Status `200`, returns review comments & user profiles |  |
